@@ -26,7 +26,7 @@
 
 \begin{document}
 	\title{\LARGE CS6390 Project Proposal: REDIRE}
-	\author{\it Oliver Richardson \hspace{2em} Maksus Cegielski-Johnson }
+	\author{\it Oliver Richardson \hspace{2em} Maks Cegielski-Johnson }
 	\maketitle 
 	
 	\vspace{-2em}
@@ -50,9 +50,14 @@
 	\subsection{SemEval Data for Paraphrasing (Textual Entailment) }
 	
 	Available at \url{https://www.cs.york.ac.uk/semeval-2013/task7/index.php%3Fid=data.html}
-	\subsection{}
 		
 	\section{Evaluation}
-	Evaluating the recognition tool should be fairly straightforeward; we have training and test data from MSRPC
+	Evaluating the recognition tool should be fairly straightforeward; we have training and test data from MSRPC, with which we can measure accuracies and F-score. As we begin to focus on generation, the process of evaluation will become less straightforeward, but we have several evaluation metrics in mind:
+	\begin{enumerate}
+		\item Finding a lower bound on accuracy by checking paraphrase datasets to see if we generated (more-or-less) an exact paraphrase. We can score reasonably close paraphrases by using wordnet lookups.
+		\item Repurposing our Paraphrase Recognizer for testing -- a tempting first pass, but suffers from two issues: it will probably not be accurate enough to test, and is also not independent. 
+		\item \textbf{BLEU} metric for evaluating the quality of machine translations
+		\item \textbf{ROUGE} metrics for evaluating the quality of summarizations -- this will require a lot of data, perhaps more than we can obtain reasonably, but 
+	\end{enumerate}
 	
 \end{document}
