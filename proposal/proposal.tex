@@ -1,0 +1,58 @@
+\documentclass[11pt, reqno]{amsart}
+
+\edef\restoreparindent{\parindent=\the\parindent\relax}
+\usepackage{parskip}
+\restoreparindent
+\usepackage{bbm}
+
+\usepackage{enumitem}
+\usepackage{amsmath, amssymb, mathrsfs}
+\usepackage{graphicx}
+\usepackage{url}
+
+\usepackage{etoolbox}
+\patchcmd{\section}{\scshape}{\Large\scshape}{}{}
+
+\usepackage[width=6.5in,height=9.5in]{geometry}
+
+
+\usepackage[bookmarks,colorlinks,breaklinks]{hyperref} 
+\usepackage{color}
+\definecolor{dullmagenta}{rgb}{0.4,0,0.4}   % #660066
+\definecolor{darkblue}{rgb}{0,0,0.4}
+\hypersetup{linkcolor=darkred,citecolor=blue,filecolor=dullmagenta,urlcolor=darkblue} % coloured links
+
+\setlength{\skip\footins}{2cm}
+
+\begin{document}
+	\title{\LARGE CS6390 Project Proposal: REDIRE}
+	\author{\it Oliver Richardson \hspace{2em} Maksus Cegielski-Johnson }
+	\maketitle 
+	
+	\vspace{-2em}
+	
+	\section{Description and Approach}
+	We are ultimately interested in making a paraphrase generation tool, but we will begin our project by building a paraphrase recognition tool. 
+	
+	\section{Baseline Approach}
+	We will train some simple machine learning classifier with features from PPDB 
+	
+	\section{Data Sources}
+	\subsection{ Penn Paraphrase Database (PPDB)} 
+	A large set of parallel English phrases. This dataset appears to be very noisy, but is a large set of paraphrases
+	
+	Available at \url{http://www.cis.upenn.edu/~ccb/ppdb/} 
+		
+	\subsection{Microsoft Paraphrasing Corpus (MSRPC) }
+	Contains lists of pairs of full sentences, with a label corresponding to whether or not the two are paraphrases.\\
+	Available at \url{http://research.microsoft.com/en-us/downloads/607d14d9-20cd-47e3-85bc-a2f65cd28042} 
+	
+	\subsection{SemEval Data for Paraphrasing (Textual Entailment) }
+	
+	Available at \url{https://www.cs.york.ac.uk/semeval-2013/task7/index.php%3Fid=data.html}
+	\subsection{}
+		
+	\section{Evaluation}
+	Evaluating the recognition tool should be fairly straightforeward; we have training and test data from MSRPC
+	
+\end{document}
