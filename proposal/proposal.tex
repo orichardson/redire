@@ -35,25 +35,25 @@
 	We are ultimately interested in generating paraphrases for a given sentence, but we will begin our project by building a paraphrase recognition tool -- so while we may end up focusing entirely on paraphrase recognition, we are not interested in training a purely discriminative model, but are instead looking to extend it to aid in paraphrase generation.	We're not entirely certain what our approach will be (we will need to see what is in most dire need of attention after we build a baseline system)  -- but we have some ideas :
 	
 	\begin{itemize}
-		\item Use monolingual corpora to 
+		\item Run a dependency parse, and align graphs; use a classifier to recognize if there exists a sufficiently good alignment to call the sentences paraphrases
+		\item Use parallel monolingual corpora to induce a grammar for synonymous constructions
+		\item Train classifiers to recognize essential words, and separately, extract a minimal grammar with maximum expresivity. Then, build a new sentence from this grammar and the essential words
 	\end{itemize}
+	These are just ideas off the top of our heads; we have not yet committed to a strategy.
 	
 	\section{Baseline Approach}
-	There are several simple approaches we could use to get a system running.
-	We will train some simple machine learning classifier with features from PPDB 
+	There are several simple approaches we could use to get a recognition system running. We will train some simple machine learning classifier with features from PPDB, and re-implement the DIRT algorithm as a baseline for paraphrase or entailment recognition. The base system for generation will just do wordnet lookups to find synonyms, and replace noun phrases.  We suspect that this is more or less what the popular-but-suspiciously-undocumented web sensation \texttt{spinbot} does. 
 	
 	\section{Data Sources}
 	\subsection{ Penn Paraphrase Database (PPDB)} 
-	A large set of parallel English phrases. This dataset appears to be very noisy, but is a large set of paraphrases
-	
+	A large set of parallel English phrases. This dataset appears to be very noisy, but is a large set of aligned incomplete phrases.
 	Available at \url{http://www.cis.upenn.edu/~ccb/ppdb/} 
 		
 	\subsection{Microsoft Paraphrasing Corpus (MSRPC) }
-	Contains lists of pairs of full sentences, with a label corresponding to whether or not the two are paraphrases.\\
+	Contains lists of pairs of full sentences, with a label corresponding to whether or not the two are paraphrases, and has already been split into training and test sets.
 	Available at \url{http://research.microsoft.com/en-us/downloads/607d14d9-20cd-47e3-85bc-a2f65cd28042} 
 	
-	\subsection{SemEval Data for Paraphrasing (Textual Entailment) }
-	
+	\subsection{SemEval Data for Paraphrasing (Textual Entailment) } A set of question-response data which we will try to figure out how to use, and seems particularly promising where there are multiple responses given for a single question. 	
 	Available at \url{https://www.cs.york.ac.uk/semeval-2013/task7/index.php%3Fid=data.html}
 		
 	\section{Evaluation}
@@ -62,8 +62,9 @@
 		\item Finding a lower bound on accuracy by checking paraphrase datasets to see if we generated (more-or-less) an exact paraphrase. We can score reasonably close paraphrases by using wordnet lookups.
 		\item Repurposing our Paraphrase Recognizer for testing -- a tempting first pass, but suffers from two issues: it will probably not be accurate enough to test, and is also not independent. 
 		\item \textbf{BLEU} metric for evaluating the quality of machine translations
-		\item \textbf{ROUGE} metrics for evaluating the quality of summarizations -- this will require a lot of data, perhaps more than we can obtain reasonably, but 
+		\item \textbf{ROUGE} metrics for evaluating the quality of summarizations -- this will require a lot of data, perhaps more than we can obtain reasonably, but we are still looking into it.
 	\end{enumerate}
+	In addition to semantic entailment of some sort, we would also like require that the sentences are sufficiently dissimilar -- a sentence hardly counts as a paraphrase of itself. To that end, we will also devise a scoring metric that awardds points based on the magnitude of change in dependency graph structure.
 
 	\section{Project Name}
 	\begin{minipage}{10em}
