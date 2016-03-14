@@ -12,8 +12,6 @@ public class Main {
 
 	public static void main(String[] args)
 	{
-		while(		true
-	)	{
 		//Initialize all the models in Util.
 		Util.initialize();
 		
@@ -38,8 +36,8 @@ public class Main {
 		//Stem the sentence
 		String[] stems = Util.stemSentence(s);
 		System.out.println(Arrays.toString(stems));
-		break
-		;						}
+		
+		
 	}
 
 
