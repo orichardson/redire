@@ -1,20 +1,14 @@
-# redire
-<h2>
-Recognition
-Entails
-Discovery of
-Inference
-Rules,
-Ellen.
-</h2>
+REDIRE
+===========
+(Recognition Entails Discovery of Inference Rules, Ellen.
 
+Required JAR Files:
+------------
 
-<h4>Required JAR Files:</h4>
-
-Stanford NLP (also contains the EJML and SL4FJ jar files)<br/>
-http://nlp.stanford.edu/software/stanford-postagger-2015-12-09.zip<br/>
-http://nlp.stanford.edu/software/stanford-parser-full-2015-12-09.zip<br/>
-http://nlp.stanford.edu/software/stanford-classifier-2015-12-09.zip<br/>
+Stanford NLP (also contains the EJML and SL4FJ jar files):
+* [http://nlp.stanford.edu/software/stanford-postagger-2015-12-09.zip]
+* [http://nlp.stanford.edu/software/stanford-parser-full-2015-12-09.zip]
+* [http://nlp.stanford.edu/software/stanford-classifier-2015-12-09.zip]
 
 Simmetric:<br/>
 http://search.maven.org/remotecontent?filepath=com/github/mpkorstanje/simmetrics-core/4.1.0/simmetrics-core-4.1.0.jar
