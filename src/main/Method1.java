@@ -16,40 +16,23 @@ import org.simmetrics.StringDistance;
 public class Method1 
 {
 	
-	/*
-	 * Tools Necessary:
-	 * Tokenizer
-	 * POS Tagger
-	 */
 
-	
-	/*
-	 * Similarity Measures (measured in terms of tokens, not characters)
-	 */	
-	
-	//Levenshtein (edit distance in terms of tokens)	
-	
-	//Jaro-Winkler 	
-	
-	//Manhattan
-	//n is number of distinct words in s1 and s2
-	//xi and yi show how many times each one of these distinct words occurs in s1 and s2 respectively
-	
-	//Euclidean
-	
-	//cosine similarity
-	
-	//n-gram distance (n = 3)
-	
-	//matching coefficient
-	
-	//Dice coefficient
-	
-	//Jaccard coefficient
-	
-	
-	/*
-	 * String Transformations
+	/**
+	 * Computes the transformations of a string for the two sentences, s1 and s2.<br/><br/>
+	 * All the strings return[n][0] are transformations of s1.<br/>
+	 * All the strings return[n][1] are transformations of s2.<br/><br/>
+	 * 
+	 * The rows are as follows: (all the original word orders are maintained)<br/>
+	 * 0. Original tokens<br/>
+	 * 1. Stemmed tokens<br/>
+	 * 2. POS tags<br/>
+	 * 3. Soundex codes<br/>
+	 * 4. Original tokens (nouns)<br/>
+	 * 5. Stemmed tokens (nouns)<br/>
+	 * 6. Soundex codes (nouns)<br/>
+	 * 7. Original tokens (verbs)<br/>
+	 * 8. Stemmed tokens (verbs)<br/>
+	 * 9. Soundex codes (verbs)
 	 */
 	public static String[][] generateTransformations(String s1, String s2)
 	{
@@ -76,16 +59,20 @@ public class Method1
 		ret[2][0] = String.join(" ", pos1);
 		ret[2][1] = String.join(" ", pos2);
 		
+		//All the soundex codes
 		String[] soundex1 = Soundex.sentenceSoundex(tokens1);
 		String[] soundex2 = Soundex.sentenceSoundex(tokens2);
 		
 		ret[3][0] = String.join(" ", soundex1);
 		ret[3][1] = String.join(" ", soundex2);
 		
+		//Positions of verbs and nouns in both sentences
 		ArrayList<Integer> nounsindex1 = new ArrayList<Integer>();
 		ArrayList<Integer> nounsindex2 = new ArrayList<Integer>();
 		ArrayList<Integer> verbsindex1 = new ArrayList<Integer>();
 		ArrayList<Integer> verbsindex2 = new ArrayList<Integer>();
+		
+		//Find all nouns and verbs in s1
 		for(int i = 0; i < pos1.length; i++)
 		{			
 			if(pos1[i].matches("NN.*"))
@@ -93,6 +80,8 @@ public class Method1
 			else if(pos1[i].matches("VB.*"))
 				verbsindex1.add(i);				
 		}
+		
+		//Find all nouns and verbs in s2
 		for(int i = 0; i < pos2.length; i++)
 		{			
 			if(pos2[i].matches("NN.*"))
@@ -100,28 +89,36 @@ public class Method1
 			else if(pos2[i].matches("VB.*"))
 				verbsindex2.add(i);				
 		}
-		
+		//All the tokens which are nouns
 		ret[4][0] = String.join(" ", maskIndices(tokens1, nounsindex1));
 		ret[4][1] = String.join(" ", maskIndices(tokens2, nounsindex2));
 		
+		//All the stems which are nouns
 		ret[5][0] = String.join(" ", maskIndices(stem1, nounsindex1));
 		ret[5][1] = String.join(" ", maskIndices(stem2, nounsindex2));
 		
+		//All the soundex codes which are nouns
 		ret[6][0] = String.join(" ", maskIndices(soundex1, nounsindex1));
 		ret[6][1] = String.join(" ", maskIndices(soundex2, nounsindex2));
 		
+		//All the tokens which are verbs.
 		ret[7][0] = String.join(" ", maskIndices(tokens1, verbsindex1));
 		ret[7][1] = String.join(" ", maskIndices(tokens2, verbsindex2));
 		
+		//All the stems which are verbs.
 		ret[8][0] = String.join(" ", maskIndices(stem1, verbsindex1));
 		ret[8][1] = String.join(" ", maskIndices(stem2, verbsindex2));
 		
+		//All the soundex codes which are verbs.
 		ret[9][0] = String.join(" ", maskIndices(soundex1, verbsindex1));
 		ret[9][1] = String.join(" ", maskIndices(soundex2, verbsindex2));
 		
 		return ret;
 	}
 	
+	/**
+	 * return an array of values which correspond to the values in the argument array, but where the indices kept are given in the index ArrayList.
+	 */
 	private static String[] maskIndices(String[] array, ArrayList<Integer> indices)
 	{
 		String[] ret = new String[indices.size()];
@@ -134,6 +131,19 @@ public class Method1
 		return ret;
 	}
 	
+	/**
+	 * For two string arrays s1 and s2, if len(s1) != len(s2), then compute all the subsets of the larger array that are the same length as the smaller array, maintaining order.<br/>
+	 * All the elements in the return array are the elements of the larger array joined with a space.
+	 * <br/>
+	 * Returns null if the arrays are the same length.
+	 * <br/><br/>
+	 * 
+	 * Example:<br/>
+	 * s1 = [A, B, C, D, E]<br/>
+	 * s2 = [X, Y, Z]<br/>
+	 * <br/>
+	 * return [A B C, B C D, C D E]
+	 */
 	public static String[] computeSubsets(String[] s1, String[] s2)
 	{
 		String[] longer;
@@ -162,11 +172,17 @@ public class Method1
 			}
 			ret[i] = String.join(" ", substring);
 		}
-		
-		
+				
 		return ret;
 	}
 	
+	/**
+	 * Finds the subset of argmax(len(s1),len(s2)) that maximizes the similarity over the sum of all the metrics used in the paper.<br/>
+	 * Returns null if the arrays are the same length.
+	 * <br/><br/>
+	 * 
+	 * Returns the subset that achieves this maximum, to be used in the feature vector. 
+	 */
 	public static String subsetArgMax(String[] s1, String[] s2)
 	{
 		String[] subsets = computeSubsets(s1, s2);
@@ -195,13 +211,21 @@ public class Method1
 		return argmax;
 	}
 	
+	/**
+	 * Computes the feature vector used for Method1 of the paper. Each vector is 133 dimensions. 
+	 */
 	public static double[] computeFeatureVector(String s1, String s2)
 	{
+		//Generates all the string transformations that we will compute metrics for.
 		String[][] transformations = generateTransformations(s1, s2);
 		
+		//Create the return vector.
 		double[] vector = new double[133];
 		
+		//This keeps track of where we are inserting to on the feature vector.
 		int position = 0;
+		
+		//Compute the distances for each pair of transformed sentences.
 		for(String[] pair : transformations)
 		{
 			double[] distances = MyStringDistance.computeAll(pair[0],pair[1]);
@@ -213,20 +237,28 @@ public class Method1
 			position += distances.length;
 		}
 		
+		//For the first 4 transformations, find the subset that maximizes the similarity. Compute these values and store it. 
 		for(int i = 0; i < 4; i++)
 		{
 			double[] distances;
-			String[] tokens1 = Util.tokenizer(transformations[i][0]);
-			String[] tokens2 = Util.tokenizer(transformations[i][1]);
+			String trans1 = transformations[i][0];
+			String trans2 = transformations[i][1];
+			String[] tokens1 = Util.tokenizer(trans1);
+			String[] tokens2 = Util.tokenizer(trans2);
+			//Compute the subset.
 			String subset = subsetArgMax(tokens1, tokens2);
+			//Compute the similarity.
 			if(subset == null)
-				distances = MyStringDistance.computeAll(transformations[i][0], transformations[i][1]);
+				//If they are the same length, then just compute the similarity again.
+				distances = MyStringDistance.computeAll(trans1, trans2);
 			else
 			{
-				String smaller = tokens1.length < tokens2.length ? transformations[i][0] : transformations[i][1];
+				String smaller = tokens1.length < tokens2.length ? trans1 : trans2;
 				distances = MyStringDistance.computeAll(subset, smaller);
 			}
+			//Counter is to read from the correct position.
 			int counter = 0;
+			//Also compute the average of all the similarities.
 			double avg = 0;
 			for(int j = position; j < position + distances.length; j++)
 			{
@@ -237,9 +269,14 @@ public class Method1
 			vector[position++] = avg/distances.length;
 			
 		}
-		Pattern negate = Pattern.compile("(.*(n't)($|\\s))|([N|n]ot)");
-		vector[position++] = negate.matcher(s1).find() ? 1 : 0;
+		//Regular expression to search for negation in a sentence. 
+		Pattern negate = Pattern.compile("(.*(n't)($|\\s))|([N|n]ot)");//looks for instances of n't and for Not. 
+		//Negation in S1
+		vector[position++] = negate.matcher(s1).find() ? 1 : 0;		
+		//Negation in S2
 		vector[position++] = negate.matcher(s2).find() ? 1 : 0;
+		
+		//ratio = min(|S1|,|S2|)/max(|S1|,|S2|)
 		double ratio = (1.0*Math.min(transformations[0][0].length(), transformations[0][1].length()))/(1.0*Math.max(transformations[0][0].length(), transformations[0][1].length()));
 		vector[position++] = ratio;
 		return vector;

@@ -3,18 +3,24 @@ package main;
 import org.simmetrics.StringMetric;
 import org.simmetrics.metrics.StringMetrics;
 
+/**
+ * 
+ * Wrapper class for Simmetrics
+ *
+ */
 public class MyStringDistance {
 	
 	/**
-	 * 
-	 * 0 - levenshtein
-	 * 1 - jaroWinkler
-	 * 2 - manhattan
-	 * 3 - euclidean
-	 * 4 - cosine
-	 * 5 - ngram (3)
-	 * 6 - matching/overlap 
-	 * 7 - dice
+	 * Computes all the metric values required for Method1 of paraphrasing. 
+	 * <br/><br/>
+	 * 0 - levenshtein<br/>
+	 * 1 - jaroWinkler<br/>
+	 * 2 - manhattan<br/>
+	 * 3 - euclidean<br/>
+	 * 4 - cosine<br/>
+	 * 5 - ngram (3)<br/>
+	 * 6 - matching/overlap <br/>
+	 * 7 - dice<br/>
 	 * 8 - jaccard
 	 */
 	public static double[] computeAll(String s1, String s2)
@@ -52,6 +58,7 @@ public class MyStringDistance {
 	
 	public static double manhattan(String s1, String s2)
 	{
+		//We had to write our own Manhattan metric since Simmetrics did not contain it.
 		StringMetric metric = ManhattanMetric.manhattanDistance();
 		
 		return metric.compare(s1, s2);

@@ -14,17 +14,30 @@ import edu.stanford.nlp.process.CoreLabelTokenFactory;
 import edu.stanford.nlp.process.PTBTokenizer;
 import edu.stanford.nlp.tagger.maxent.MaxentTagger;
 
+/**
+ * 
+ * Provides wrappers for any NLP utility we need. Primarily using Stanford NLP files.
+ *
+ */
 public class Util {
 
+	
 	private static MaxentTagger tagger;
 	private static Stemmer stemmer;
 
+	/**
+	 * Initialize any objects/models we need. This is due to the fact that a model takes a long time to initialize
+	 * and if not done so, will create a bottleneck. 
+	 */
 	public static void initialize()
 	{
 		tagger = new MaxentTagger("models/pos/english-bidirectional-distsim.tagger");
 		stemmer = new Stemmer();
 	}
 
+	/**
+	 * Reads all the MSR training/testing data and creates a list of MSR objects.
+	 */
 	public static ArrayList<MSR> readMSRFile(String filename)
 	{
 		ArrayList<MSR> ret = new ArrayList<MSR>();
@@ -52,7 +65,7 @@ public class Util {
 	
 
 	/**
-	 * 
+	 * Takes a String sentence and tokenizes it.
 	 * @param sentence - The sentence to tokenize
 	 * @return - String array of the tokens.
 	 */
@@ -72,12 +85,22 @@ public class Util {
 		return retArr;
 	}
 
+	/**
+	 * Creates a list of Word objects.
+	 * @param sentence
+	 * @return
+	 */
 	public static List<Word> createWordList(String sentence)
 	{
 		String[] tokens = tokenizer(sentence);
 		return createWordList(tokens);
 	}
 	
+	/**
+	 * Creates a list of Word objects.
+	 * @param tokens
+	 * @return
+	 */
 	public static List<Word> createWordList(String[] tokens)
 	{
 		List<Word> words = new ArrayList<Word>();
@@ -88,6 +111,10 @@ public class Util {
 		return words;
 	}
 
+	/**
+	 * Returns an array of all the POS tags. The position of the POS tag matches the position of a word
+	 * in the tokenized sentence array.
+	 */
 	public static String[] tagPOS(String sentence)
 	{		
 		List<TaggedWord> tagged = tagger.tagSentence(createWordList(sentence));
@@ -95,6 +122,10 @@ public class Util {
 		return tagPOS(tagged);
 	}
 	
+	/**
+	 * Returns an array of all the POS tags. The position of the POS tag matches the position of a word
+	 * in the tokenized sentence array.
+	 */
 	public static String[] tagPOS(String[] tokens)
 	{		
 		List<TaggedWord> tagged = tagger.tagSentence(createWordList(tokens));
@@ -102,6 +133,10 @@ public class Util {
 		return tagPOS(tagged);
 	}
 	
+	/**
+	 * Returns an array of all the POS tags. The position of the POS tag matches the position of a word
+	 * in the tokenized sentence array.
+	 */
 	public static String[] tagPOS(List<TaggedWord> tagged)
 	{		
 		String[] ret = new String[tagged.size()];
@@ -115,12 +150,20 @@ public class Util {
 	}
 
 
+	/**
+	 * Stems a sentence, returning an array of the stems. The position of the stem matches the position of a word in the 
+	 * tokenized sentence array.
+	 */
 	public static String[] stemSentence(String sentence)
 	{
 		String[] tokens = Util.tokenizer(sentence);
 		return stemSentence(tokens);
 	}
 
+	/**
+	 * Stems a sentence, returning an array of the stems. The position of the stem matches the position of a word in the 
+	 * tokenized sentence array.
+	 */
 	public static String[] stemSentence(String[] tokens)
 	{
 		String[] ret = new String[tokens.length];

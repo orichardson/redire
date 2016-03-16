@@ -10,7 +10,14 @@ import com.google.common.collect.Multiset;
 import com.google.common.collect.Multisets;
 
 
-
+/**
+ * 
+ * Implements methods required required for ManhattanDistance.
+ * 
+ * Based off the Simmetrics Euclidean distance class.
+ *
+ * @param <T>
+ */
 public final class ManhattanDistance<T> implements MultisetMetric<T>, MultisetDistance<T> {
 
 	@Override

@@ -1,5 +1,10 @@
 package main;
 
+/**
+ * 
+ * Wrapper class for the MSR data. Each MSR object contains all the data for one example. 
+ *
+ */
 public class MSR {
 
 	
