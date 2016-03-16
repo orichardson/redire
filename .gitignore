@@ -3,4 +3,6 @@ proposal/*
 data/ppdb/*
 bin/
 lib/
+out/
+.project
 .classpath
