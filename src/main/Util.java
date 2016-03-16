@@ -31,7 +31,7 @@ public class Util {
 	 */
 	public static void initialize()
 	{
-		tagger = new MaxentTagger("models/pos/english-bidirectional-distsim.tagger");
+		tagger = new MaxentTagger("lib/stanford-postagger/models/english-bidirectional-distsim.tagger");
 		stemmer = new Stemmer();
 	}
 

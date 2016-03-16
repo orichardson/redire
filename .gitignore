@@ -1,6 +1,7 @@
 proposal/*
 !proposal/*.tex
 data/ppdb/*
-/bin/
+bin/
+lib/
 /models/pos/english-bidirectional-distsim.tagger
 .classpath
