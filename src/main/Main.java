@@ -29,7 +29,7 @@ public class Main {
 		/*
 		 * Writing the training file
 		 */
-		PrintWriter writer = new PrintWriter("msr_para.train", "UTF-8");
+		PrintWriter writer = new PrintWriter("out/msr_para.train", "UTF-8");
 		int progress = 0;
 		for (MSR msr : training) {
 			// The label
@@ -52,7 +52,7 @@ public class Main {
 		 * Writing the testing file
 		 */
 		progress = 0;
-		writer = new PrintWriter("msr_para.test", "UTF-8");
+		writer = new PrintWriter("out/msr_para.test", "UTF-8");
 		for (MSR msr : testing) {
 			// The label
 			String output = "" + (msr.isParaphrase() ? -1 : 1);
