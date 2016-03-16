@@ -2,3 +2,4 @@ proposal/*
 !proposal/*.tex
 data/ppdb/*
 /bin/
+/models/pos/english-bidirectional-distsim.tagger
