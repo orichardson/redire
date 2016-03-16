@@ -53,6 +53,8 @@ public class Util {
 				ret.add(new MSR(splt[0], splt[1], splt[2], splt[3], splt[4]));
 				line = br.readLine();
 			}
+			
+			br.close();
 
 		}
 		catch (IOException e) 

@@ -3,8 +3,6 @@ package main;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 
-import org.simmetrics.StringDistance;
-
 
 /**
  * 

@@ -3,5 +3,4 @@ proposal/*
 data/ppdb/*
 bin/
 lib/
-/models/pos/english-bidirectional-distsim.tagger
 .classpath
