@@ -1,15 +1,15 @@
 # redire
-
+<h2>
 Recognition
 Entails
 Discovery of
 Inference
 Rules,
 Ellen.
+</h2>
 
 
-
-Required JAR Files:
+<h4>Required JAR Files:</h4>
 
 Stanford NLP (also contains the EJML and SL4FJ jar files)<br/>
 http://nlp.stanford.edu/software/stanford-postagger-2015-12-09.zip<br/>
