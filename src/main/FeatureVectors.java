@@ -1,7 +1,10 @@
 package main;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.regex.Pattern;
+
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 
 /**
@@ -11,7 +14,7 @@ import java.util.regex.Pattern;
  * Implementation of the necessary features of Method 1 of the Malakasiotis paper.
  *
  */
-public class Method1 
+public class FeatureVectors 
 {
 	
 
@@ -210,15 +213,36 @@ public class Method1
 	}
 	
 	/**
-	 * Computes the feature vector used for Method1 of the paper. Each vector is 133 dimensions. 
+	 * Computes the feature vector used for Method1 of the paper. Each vector is 133 dimensions. The mode selects whether we are making vectors for "INIT", "INIT+WN" or "INIT+WN+DEP" from the paper.
+	 * <br/>
+	 * <br/>
+	 * Mode:<br/>
+	 * 1. INIT <br/>
+	 * 2. INIT+WN <br/>
+	 * 3. INIT+WN+DEP<br/>
 	 */
-	public static double[] computeFeatureVector(String s1, String s2)
+	public static double[] computeFeatureVector(String s1, String s2, int mode)
 	{
 		//Generates all the string transformations that we will compute metrics for.
 		String[][] transformations = generateTransformations(s1, s2);
 		
-		//Create the return vector.
+		//create the return vector
 		double[] vector = new double[133];
+		
+		if(mode == 1)
+		{
+			vector = new double[133];
+		}
+		else if(mode == 2)
+		{
+			throw new NotImplementedException();
+		}
+		else
+		{
+			//Need to add wordnet as well
+			vector = new double[136];
+		}
+
 		
 		//This keeps track of where we are inserting to on the feature vector.
 		int position = 0;
@@ -277,6 +301,32 @@ public class Method1
 		//ratio = min(|S1|,|S2|)/max(|S1|,|S2|)
 		double ratio = (1.0*Math.min(transformations[0][0].length(), transformations[0][1].length()))/(1.0*Math.max(transformations[0][0].length(), transformations[0][1].length()));
 		vector[position++] = ratio;
+		
+		if(mode == 2 || mode == 3)
+		{
+			
+		}
+		
+		if(mode == 3)
+		{
+			HashSet<NormalizedTypedDependency> dep1 = Util.getDependencySet(s1);
+			HashSet<NormalizedTypedDependency> dep2 = Util.getDependencySet(s2);
+			
+			double dep1size = dep1.size();
+			double dep2size = dep2.size();
+			
+			dep1.addAll(dep2);
+			
+			double common = dep1.size();
+			
+			double R1 = common/dep1size;
+			double R2 = common/dep2size;
+			double FR = (2*R1*R2)/(R1+R2);
+			vector[position++] = R1;
+			vector[position++] = R2;
+			vector[position++] = FR;
+			
+		}
 		return vector;
 	}
 }

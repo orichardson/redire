@@ -5,14 +5,19 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
 import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.ling.TaggedWord;
 import edu.stanford.nlp.ling.Word;
+import edu.stanford.nlp.parser.nndep.DependencyParser;
 import edu.stanford.nlp.process.CoreLabelTokenFactory;
 import edu.stanford.nlp.process.PTBTokenizer;
 import edu.stanford.nlp.tagger.maxent.MaxentTagger;
+import edu.stanford.nlp.trees.GrammaticalStructure;
+import edu.stanford.nlp.trees.TypedDependency;
 
 /**
  * 
@@ -24,6 +29,7 @@ public class Util {
 	
 	private static MaxentTagger tagger;
 	private static Stemmer stemmer;
+	private static DependencyParser parser;
 
 	/**
 	 * Initialize any objects/models we need. This is due to the fact that a model takes a long time to initialize
@@ -33,6 +39,28 @@ public class Util {
 	{
 		tagger = new MaxentTagger("lib/stanford-postagger/models/english-bidirectional-distsim.tagger");
 		stemmer = new Stemmer();
+		parser = DependencyParser.loadFromModelFile(DependencyParser.DEFAULT_MODEL);
+	}
+	
+	
+	public static HashSet<NormalizedTypedDependency> getDependencySet(String sentence)
+	{
+		List<TaggedWord> tagged = tagger.tagSentence(createWordList(sentence));
+		
+		GrammaticalStructure gs = parser.predict(tagged);
+		
+		Collection<TypedDependency> tds = gs.allTypedDependencies();
+		
+		HashSet<NormalizedTypedDependency> tdset = new HashSet<NormalizedTypedDependency>();
+		
+		for(TypedDependency td : tds)
+		{
+			NormalizedTypedDependency ntd = new NormalizedTypedDependency(td.reln().toString(), td.gov().toString(), td.dep().toString());
+			tdset.add(ntd);
+		}
+		
+		return tdset;
+		
 	}
 
 	/**
