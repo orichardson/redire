@@ -15,3 +15,7 @@ Simmetric:
 
 Google Collections:
 * [guava](http://search.maven.org/remotecontent?filepath=com/google/guava/guava/19.0/guava-19.0.jar)
+
+WordNet:
+* [WordNet for Windows](http://wordnetcode.princeton.edu/2.1/WordNet-2.1.exe)
+* [JWI](http://projects.csail.mit.edu/jwi/download.php?f=edu.mit.jwi_2.4.0_all.zip)
