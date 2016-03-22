@@ -1,4 +1,4 @@
-package main;
+package framework;
 
 public class NormalizedTypedDependency {
 

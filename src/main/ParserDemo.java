@@ -20,7 +20,7 @@ import edu.stanford.nlp.trees.TreePrint;
 import edu.stanford.nlp.trees.TreebankLanguagePack;
 import edu.stanford.nlp.trees.TypedDependency;
 
-public class Demo {
+public class ParserDemo {
 
 	public static void main(String[] args) {
 
@@ -104,6 +104,6 @@ public class Demo {
 		tp.printTree(parse);
 	}
 
-	private Demo() {
+	private ParserDemo() {
 	} // static methods only
 }
