@@ -1,109 +1,60 @@
 package utensils;
 
+import java.util.HashMap;
+
 /******************************************************************************
- *  Compilation:  javac Soundex.java
- *  Execution:    java surname1 surname2
+ * Original Comments: N516: Numbers
  *
- *
- *  % java Soundex Wohrzhick Warzick
- *  W622: Wohrzhick 
- *  W622: Warzick
- *
- *  % java Soundex Smith Smyth
- *  S530: Smith
- *  S530: Smyth
- *
- *  % java Soundex Washington Lee
- *  W252: Washington
- *  L000: Lee
- *
- *  % java Soundex Pfister Jackson
- *  P236: Pfister
- *  J250: Jackson
- *
- *  % java Soundex Scott Numbers
- *  S300: Scott
- *  N516: Numbers
- *
- *  Note: we ignore the "Names with Prefix" and "Constant Separator"
- *  rules from 
- *  http://www.archives.gov/research_room/genealogy/census/soundex.html
+ * Note: we ignore the "Names with Prefix" and "Constant Separator" rules from
+ * http://www.archives.gov/research_room/genealogy/census/soundex.html
+ * 
+ * Restructured to be reasonably readable
  *
  ******************************************************************************/
 
 public class Soundex {
-	
-    public static String soundex(String s) { 
-        char[] x = s.toUpperCase().toCharArray();
-        char firstLetter = x[0];
 
-        // convert letters to numeric code
-        for (int i = 0; i < x.length; i++) {
-            switch (x[i]) {
+	public static final HashMap<Character, Character> LOOKUP = new HashMap<>();
 
-                case 'B':
-                case 'F':
-                case 'P':
-                case 'V':
-                    x[i] = '1';
-                    break;
+	static {
+		for (char c : "BFPV".toCharArray())
+			LOOKUP.put(c, '1');
+		for (char c : "CGJKQSXZ".toCharArray())
+			LOOKUP.put(c, '2');
+		for (char c : "DT".toCharArray())
+			LOOKUP.put(c, '3');
+		for (char c : "MN".toCharArray())
+			LOOKUP.put(c, '5');
+		LOOKUP.put('L', '4');
+		LOOKUP.put('R', '6');
+	}
 
-                case 'C':
-                case 'G':
-                case 'J':
-                case 'K':
-                case 'Q':
-                case 'S':
-                case 'X':
-                case 'Z':
-                    x[i] = '2';
-                    break;
+	public static String soundex(String s) {
+		char[] x = s.toUpperCase().toCharArray();
+		char firstLetter = x[0];
 
-                case 'D':
-                case 'T':
-                    x[i] = '3';
-                    break;
+		// convert letters to numeric code
+		for (int i = 0; i < x.length; i++)
+			x[i] = LOOKUP.getOrDefault(x[i], '0');
 
-                case 'L':
-                    x[i] = '4';
-                    break;
+		// remove duplicates
+		String output = "" + firstLetter;
+		for (int i = 1; i < x.length; i++)
+			if (x[i] != x[i - 1] && x[i] != '0')
+				output += x[i];
 
-                case 'M':
-                case 'N':
-                    x[i] = '5';
-                    break;
+		// pad with 0's or truncate
+		output = output + "0000";
+		return output.substring(0, 4);
+	}
 
-                case 'R':
-                    x[i] = '6';
-                    break;
+	public static String[] sentenceSoundex(String[] sentence) {
+		String[] ret = new String[sentence.length];
 
-                default:
-                    x[i] = '0';
-                    break;
-            }
-        }
+		for (int i = 0; i < sentence.length; i++)
+			ret[i] = soundex(sentence[i]);
 
-        // remove duplicates
-        String output = "" + firstLetter;
-        for (int i = 1; i < x.length; i++)
-            if (x[i] != x[i-1] && x[i] != '0')
-                output += x[i];
-
-        // pad with 0's or truncate
-        output = output + "0000";
-        return output.substring(0, 4);
-    }
-    
-    public static String[] sentenceSoundex(String[] sentence)
-    {
-    	String[] ret = new String[sentence.length];
-    	
-    	for(int i = 0; i < sentence.length; i++)
-    	{
-    		ret[i] = soundex(sentence[i]);
-    	}
-    	
-    	return ret;
-    }
+		return ret;
+	}
 
 }
