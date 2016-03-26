@@ -17,7 +17,7 @@ import org.simmetrics.MultisetMetric;
  * Wrapper class for Simmetrics
  *
  */
-public class StringDistanceCalculator {
+public class StringSimCalculator {
 	public static final StringMetric[] METRICES;
 
 	static {
@@ -58,7 +58,7 @@ public class StringDistanceCalculator {
 				return 1.0f;
 			}
 
-			float maxDistance = (float) Math.abs(a.size() + b.size());
+			float maxDistance = (float) (a.size() + b.size());
 			return 1.0f - distance(a, b) / maxDistance;
 		}
 

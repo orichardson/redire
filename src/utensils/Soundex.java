@@ -1,6 +1,8 @@
 package utensils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /******************************************************************************
  * Original Comments: N516: Numbers
@@ -48,11 +50,11 @@ public class Soundex {
 		return output.substring(0, 4);
 	}
 
-	public static String[] sentenceSoundex(String[] sentence) {
-		String[] ret = new String[sentence.length];
+	public static List<String> codeAll(List<String> things) {
+		List<String> ret = new ArrayList<String>(things.size());
 
-		for (int i = 0; i < sentence.length; i++)
-			ret[i] = soundex(sentence[i]);
+		for(String t : things)
+			ret.add(soundex(t));
 
 		return ret;
 	}

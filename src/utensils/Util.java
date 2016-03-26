@@ -18,13 +18,12 @@ import edu.stanford.nlp.process.PTBTokenizer;
 import edu.stanford.nlp.tagger.maxent.MaxentTagger;
 import edu.stanford.nlp.trees.GrammaticalStructure;
 import edu.stanford.nlp.trees.TypedDependency;
+import framework.MSR;
 import framework.NormalizedTypedDependency;
-import main.MSR;
 
 /**
  * 
- * Provides wrappers for any NLP utility we need. Primarily using Stanford NLP
- * files.
+ * Provides wrappers for any NLP utility we need. Primarily using Stanford NLP files.
  *
  */
 public class Util {
@@ -34,9 +33,8 @@ public class Util {
 	private static DependencyParser parser;
 
 	/**
-	 * Initialize any objects/models we need. This is due to the fact that a
-	 * model takes a long time to initialize and if not done so, will create a
-	 * bottleneck.
+	 * Initialize any objects/models we need. This is due to the fact that a model takes a long time to initialize and
+	 * if not done so, will create a bottleneck.
 	 */
 	public static void initialize() {
 		tagger = new MaxentTagger("lib/stanford-postagger/models/english-bidirectional-distsim.tagger");
@@ -61,36 +59,7 @@ public class Util {
 	}
 
 	/**
-	 * Reads all the MSR training/testing data and creates a list of MSR
-	 * objects.
-	 */
-	public static ArrayList<MSR> readMSRFile(String filename) {
-		ArrayList<MSR> ret = new ArrayList<MSR>();
-		try {
-
-			BufferedReader br = new BufferedReader(new FileReader(filename));
-			String line = br.readLine();
-			line = br.readLine();// Read line again because first line is just
-									// column headers.
-			while (line != null) {
-				String[] splt = line.split("\t");// Split on tabs, not any
-													// whitespace
-				ret.add(new MSR(splt[0], splt[1], splt[2], splt[3], splt[4]));
-				line = br.readLine();
-			}
-
-			br.close();
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		return ret;
-	}
-
-	/**
-	 * God this method is awful. WHy make so many objects just to throw them
-	 * away?
+	 * God this method is awful. WHy make so many objects just to throw them away?
 	 * 
 	 * Takes a String sentence and tokenizes it.
 	 * 
@@ -98,7 +67,7 @@ public class Util {
 	 *            - The sentence to tokenize
 	 * @return - String array of the tokens.
 	 */
-	public static String[] tokenizer(String sentence) {
+	public static List<String> tokenize(String sentence) {
 		PTBTokenizer<CoreLabel> ptb = new PTBTokenizer<CoreLabel>(new StringReader(sentence),
 				new CoreLabelTokenFactory(), "");
 
@@ -108,10 +77,7 @@ public class Util {
 
 			ret.add(label.toString());
 		}
-		String[] retArr = new String[ret.size()];
-		retArr = ret.toArray(retArr);
-
-		return retArr;
+		return ret;
 	}
 
 	/**
@@ -121,8 +87,7 @@ public class Util {
 	 * @return
 	 */
 	public static List<Word> createWordList(String sentence) {
-		String[] tokens = tokenizer(sentence);
-		return createWordList(tokens);
+		return createWordList(tokenize(sentence));
 	}
 
 	/**
@@ -131,67 +96,64 @@ public class Util {
 	 * @param tokens
 	 * @return
 	 */
-	public static List<Word> createWordList(String[] tokens) {
+	public static List<Word> createWordList(List<String> tokens) {
 		List<Word> words = new ArrayList<Word>();
-		for (String token : tokens) {
+		for (String token : tokens)
 			words.add(new Word(token));
-		}
+
 		return words;
 	}
 
 	/**
-	 * Returns an array of all the POS tags. The position of the POS tag matches
-	 * the position of a word in the tokenized sentence array.
+	 * Returns an array of all the POS tags. The position of the POS tag matches the position of a word in the tokenized
+	 * sentence array.
 	 */
-	public static String[] tagPOS(String sentence) {
+	public static List<String> tagPOS(String sentence) {
 		List<TaggedWord> tagged = tagger.tagSentence(createWordList(sentence));
 
-		return tagPOS(tagged);
+		return getTags(tagged);
 	}
 
 	/**
-	 * Returns an array of all the POS tags. The position of the POS tag matches
-	 * the position of a word in the tokenized sentence array.
+	 * Returns an array of all the POS tags. The position of the POS tag matches the position of a word in the tokenized
+	 * sentence array.
 	 */
-	public static String[] tagPOS(String[] tokens) {
+	public static List<String> tagPOS(List<String> tokens) {
 		List<TaggedWord> tagged = tagger.tagSentence(createWordList(tokens));
 
-		return tagPOS(tagged);
+		return getTags(tagged);
 	}
 
 	/**
-	 * Returns an array of all the POS tags. The position of the POS tag matches
-	 * the position of a word in the tokenized sentence array.
+	 * Returns an array of all the POS tags. The position of the POS tag matches the position of a word in the tokenized
+	 * sentence array.
 	 */
-	public static String[] tagPOS(List<TaggedWord> tagged) {
-		String[] ret = new String[tagged.size()];
+	public static List<String> getTags(List<TaggedWord> tagged) {
+		List<String> ret = new ArrayList<>();
 
-		int pos = 0;
-		for (TaggedWord w : tagged) {
-			ret[pos++] = w.tag();
-		}
+		for (TaggedWord w : tagged)
+			ret.add(w.tag());
+
 		return ret;
 	}
 
 	/**
-	 * Stems a sentence, returning an array of the stems. The position of the
-	 * stem matches the position of a word in the tokenized sentence array.
+	 * Stems a sentence, returning an array of the stems. The position of the stem matches the position of a word in the
+	 * tokenized sentence array.
 	 */
-	public static String[] stemSentence(String sentence) {
-		String[] tokens = Util.tokenizer(sentence);
-		return stemSentence(tokens);
+	public static List<String> stemSentence(String sentence) {
+		return stemSentence(Util.tokenize(sentence));
 	}
 
 	/**
-	 * Stems a sentence, returning an array of the stems. The position of the
-	 * stem matches the position of a word in the tokenized sentence array.
+	 * Stems a sentence, returning an array of the stems. The position of the stem matches the position of a word in the
+	 * tokenized sentence array.
 	 */
-	public static String[] stemSentence(String[] tokens) {
-		String[] ret = new String[tokens.length];
-		int pos = 0;
-		for (String token : tokens) {
-			ret[pos++] = stemmer.stem(token);
-		}
+	public static List<String> stemSentence(List<String> tokens) {
+		List<String> ret = new ArrayList<>();
+		for (String token : tokens)
+			ret.add(stemmer.stem(token));
+		
 		return ret;
 	}
 
