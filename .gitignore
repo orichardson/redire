@@ -1,5 +1,5 @@
-proposal/*
-!proposal/*.tex
+writing/*
+!writing/*.tex
 data/ppdb/*
 bin/
 lib/
