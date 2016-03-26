@@ -4,5 +4,6 @@ data/ppdb/*
 bin/
 lib/
 out/
+data/
 .project
 .classpath

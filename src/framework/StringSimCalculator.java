@@ -19,16 +19,19 @@ import org.simmetrics.MultisetMetric;
  */
 public class StringSimCalculator {
 	public static final StringMetric[] METRICES;
+	public static final StringMetric LEV;
 
 	static {
-		System.out.println("Initializing String  Distances");
-		METRICES = new StringMetric[] { levenshtein(), jaroWinkler(), Manhattan.makeStringMetric(),
-				euclideanDistance(), cosineSimilarity(), qGramsDistance(), overlapCoefficient(), dice(), jaccard() };
+		System.out.print("Initializing String  Distances..");
+		LEV = levenshtein();
+		METRICES = new StringMetric[] { LEV, jaroWinkler(), Manhattan.makeStringMetric(),
+				euclideanDistance(), cosineSimilarity(), qGramsDistance(), overlapCoefficient(),
+				dice(), jaccard() };
+		System.out.print(".. done.\n");
 	}
 
 	/**
-	 * Computes all the metric values required for Method1 of paraphrasing.
-	 * <br/>
+	 * Computes all the metric values required for Method1 of paraphrasing. <br/>
 	 * <br/>
 	 * 0 - levenshtein<br/>
 	 * 1 - jaroWinkler<br/>

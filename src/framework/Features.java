@@ -164,6 +164,10 @@ public class Features {
 		return argmax;
 	}
 
+	public static List<Double> computeBaselineFV(String s1, String s2) {
+		return Collections.nCopies(1, (double) StringSimCalculator.LEV.compare(s1, s2));
+	}
+
 	/**
 	 * Computes the feature vector used for Method1 of the paper. Each vector is 133 dimensions. The mode selects
 	 * whether we are making vectors for "INIT", "INIT+WN" or "INIT+WN+DEP" from the paper. <br/>
@@ -173,7 +177,7 @@ public class Features {
 	 * 2. INIT+WN <br/>
 	 * 3. INIT+WN+DEP<br/>
 	 */
-	public static List<Double> computeFeatureVector(String s1, String s2, int mode) {
+	public static List<Double> computeFullFeatureVector(String s1, String s2, int mode) {
 		// Generates all the string for which we compute metrics.
 		List<String> trans1 = generateFeatures(s1), trans2 = generateFeatures(s2);
 		int N = trans1.size();
