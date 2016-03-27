@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import utensils.Soundex;
+import utensils.StopWatch;
 import utensils.Util;
 
 /**
@@ -38,24 +39,37 @@ public class Features {
 	 * 9. Soundex codes (verbs)
 	 */
 
+	public static StopWatch tokenTime = new StopWatch(),
+			stemTime = new StopWatch(),
+			soundexTime = new StopWatch(),
+			posTime = new StopWatch();
+
 	public static List<String> generateFeatures(String str) {
 		List<String> features = new ArrayList<>(10);
 
 		// Original tokens with order maintained
+		tokenTime.go();
 		List<String> tokens = Util.tokenize(str);
 		features.add(String.join(" ", tokens));
+		tokenTime.stop();
 
 		// Tokens replaced by their stems.
+		stemTime.go();
 		List<String> stemmed = Util.stemSentence(tokens);
 		features.add(String.join(" ", stemmed));
+		stemTime.stop();
 
 		// Tokens replaced by their POS tags.
-		List<String> postags = Util.tagPOS(tokens);
+		posTime.go();
+		List<String> postags = Collections.nCopies(tokens.size(), "POSTAG");//Util.tagPOS(tokens);
 		features.add(String.join(" ", postags));
+		posTime.stop();
 
 		// All the soundex codes
+		soundexTime.go();
 		List<String> soundex = Soundex.codeAll(tokens);
 		features.add(String.join(" ", soundex));
+		soundexTime.stop();
 
 		// Positions of verbs and nouns in both sentences
 		ArrayList<Integer> nounsi = new ArrayList<Integer>();
@@ -63,9 +77,9 @@ public class Features {
 
 		// Find all nouns and verbs in s1
 		for (int i = 0; i < postags.size(); i++) {
-			if (postags.get(i).matches("NN.*"))
+			if (postags.get(i).startsWith("NN"))
 				nounsi.add(i);
-			else if (postags.get(i).matches("VB.*"))
+			else if (postags.get(i).startsWith("VB"))
 				verbsi.add(i);
 		}
 
@@ -165,7 +179,8 @@ public class Features {
 	}
 
 	/**
-	 * Compute the baseline feature (Levenshtein Edit Distance) for two strings. 
+	 * Compute the baseline feature (Levenshtein Edit Distance) for two strings.
+	 * 
 	 * @param s1
 	 * @param s2
 	 * @return

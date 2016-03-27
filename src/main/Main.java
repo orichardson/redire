@@ -1,13 +1,17 @@
 package main;
 
-import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
 import edu.stanford.nlp.classify.Classifier;
-import edu.stanford.nlp.classify.Dataset;
 import edu.stanford.nlp.classify.GeneralDataset;
+import edu.stanford.nlp.classify.LogisticClassifier;
 import edu.stanford.nlp.classify.LogisticClassifierFactory;
+import edu.stanford.nlp.classify.RVFDataset;
+import edu.stanford.nlp.ling.RVFDatum;
+import edu.stanford.nlp.stats.ClassicCounter;
 import edu.stanford.nlp.util.Pair;
 import framework.Features;
 import framework.MSR;
@@ -21,53 +25,73 @@ import utensils.Util;
  *
  */
 class Main {
-	
+
 	/**
-	 * Determines which features are selected for classification. 
+	 * Determines which features are selected for classification.
 	 */
 	public static int MODE = 1;
 
 	/**
 	 * Creates a dataset for machine learning.
+	 * 
 	 * @param examples
 	 * @param mode
 	 * @return
 	 */
-	public static Dataset<Boolean, Double> makeFeatureData(Collection<? extends ParaExample> examples, int mode) {
+	public static RVFDataset<Integer, String> makeFeatureData(Collection<? extends ParaExample> examples, int mode) {
 
-		Dataset<Boolean, Double> ds = new Dataset<Boolean, Double>();
+		RVFDataset<Integer, String> ds = new RVFDataset<>();
 		for (ParaExample ex : examples)
-			ds.add(Features.computeFullFeatureVector(ex.first(), ex.second(), mode), ex.isPara());
+			ds.add(dumbConversion(Features.computeFullFeatureVector(ex.first(), ex.second(), mode),
+					ex.isPara() ? 1 : -1));
 
 		return ds;
 	}
-	
+
 	/**
 	 * Creates the baseline dataset for machine learning.
-	 * @param examples - training examples
+	 * 
+	 * @param examples
+	 *            - training examples
 	 * @return
 	 */
-	public static Dataset<Boolean, Double> makeBaselineData(Collection<? extends ParaExample> examples) {
-		Dataset<Boolean, Double> ds = new Dataset<Boolean, Double>();
-		for (ParaExample ex : examples)
-			ds.add(Features.computeBaselineFV(ex.first(), ex.second()), ex.isPara());
+	public static RVFDataset<Integer, String> makeBaselineData(Collection<? extends ParaExample> examples) {
+		RVFDataset<Integer, String> ds = new RVFDataset<>();
+		for (ParaExample ex : examples) {
+			ds.add(dumbConversion(Features.computeBaselineFV(ex.first(), ex.second()), ex.isPara() ? 1 : -1));
+		}
 
 		return ds;
 	}
-	
-	/**
-	 * Prints the statistics from the machine learning classifier. 
-	 * @param c - Machine learning classifier
-	 * @param testd - test data set
-	 */
-	public static void printStats(Classifier<Boolean,Double> c, GeneralDataset<Boolean, Double> testd) {
-		Pair<Double, Double> pr = c.evaluatePrecisionAndRecall(testd, true);
-		LOG.m("Precision and recall: " + pr);
-		LOG.m("F-score: " + ((2 * pr.first * pr.second) / (pr.first + pr.second)));
-		LOG.m("Accuracy : " + c.evaluateAccuracy(testd));
+
+	public static <E> RVFDatum<E, String> dumbConversion(List<Double> list, E label) {
+		ClassicCounter<String> counter = new ClassicCounter<String>();
+
+		for (int i = 0; i < list.size(); i++) {
+			counter.incrementCount("F" + i, list.get(i));
+		}
+
+		return new RVFDatum<E, String>(counter, label);
 	}
 
-	public static void main(String[] args) throws FileNotFoundException {
+	/**
+	 * Prints the statistics from the machine learning classifier.
+	 * 
+	 * @param c
+	 *            - Machine learning classifier
+	 * @param testd
+	 *            - test data set
+	 */
+	public static <A, B> void printStats(Classifier<A, B> c, GeneralDataset<A, B> testd) {
+		LOG.m("Accuracy: " + c.evaluateAccuracy(testd));
+		LOG.m("Precision & Recall & F-measure");
+		for (A val : testd.labelIndex()) {
+			Pair<Double, Double> pr = c.evaluatePrecisionAndRecall(testd, val);
+			LOG.m(pr.first + " & " + pr.second + " & " + ((2 * pr.first * pr.second) / (pr.first + pr.second)));
+		}
+	}
+
+	public static void main(String[] args) throws Exception {
 		Util.initialize();
 
 		// The MSR training file and test file	
@@ -86,23 +110,38 @@ class Main {
 		System.out.println(paras + "\t" + count + "\t" + (paras / (double) count));
 
 		//Make the baseline data feature vectors
-		Dataset<Boolean, Double> fv0_train = makeBaselineData(trainMSR), fv0_test = makeBaselineData(testMSR);
+		RVFDataset<Integer, String> fv0_train = makeBaselineData(trainMSR), fv0_test = makeBaselineData(testMSR);
 
 		// baseline
 		LOG.m("Base Line: ");
-		Classifier<Boolean, Double> classifier0 = new LogisticClassifierFactory<Boolean, Double>()
+		LogisticClassifier<Integer, String> classifier0 = new LogisticClassifierFactory<Integer, String>()
 				.trainClassifier(fv0_train);
 		LOG.m("Classifier Trained");
 		printStats(classifier0, fv0_test);
+		
+		LOG.m(Arrays.toString(classifier0.getWeights()));
 
 		// actual classifier
-		Dataset<Boolean, Double> fv_train = makeFeatureData(trainMSR, MODE), fv_test = makeFeatureData(testMSR, MODE);
-		Classifier<Boolean, Double> classifier = new LogisticClassifierFactory<Boolean, Double>()
+		RVFDataset<Integer, String> fv_train = makeFeatureData(trainMSR, MODE),
+				fv_test = makeFeatureData(testMSR, MODE);
+		Classifier<Integer, String> classifier = new LogisticClassifierFactory<Integer, String>()
 				.trainClassifier(fv_train);
 		LOG.m("Full classifier trained");
 		printStats(classifier, fv_test);
 
-		// fv_train.printSVMLightFormat(new PrintWriter("out/msr_para.train"));
-		// fv_test.printSVMLightFormat(new PrintWriter("out/msr_para.test"));
+		System.out.println("\n\nToken: " + Features.tokenTime.checkS());
+		System.out.println("Stem: " + Features.stemTime.checkS());
+		System.out.println("Soundex: " + Features.soundexTime.checkS());
+		System.out.println("POS: " + Features.posTime.checkS());
+
+//		System.out.println(Arrays.deepToString(fv0_train.getDataArray()));
+//		fv0_train.printSparseFeatureMatrix();
+//		System.out.println("\n***********************************\n");
+//		fv_train.printSparseFeatureMatrix();
+
+		fv0_train.printSVMLightFormat(new PrintWriter("out/msr_para0.train"));
+		fv0_test.printSVMLightFormat(new PrintWriter("out/msr_para0.test"));
+		fv_train.printSVMLightFormat(new PrintWriter("out/msr_para.train"));
+		fv_test.printSVMLightFormat(new PrintWriter("out/msr_para.test"));
 	}
 }
