@@ -1,5 +1,6 @@
 writing/*
 !writing/**/*.tex
+!writing/**/*.bib
 data/ppdb/*
 bin/
 lib/
