@@ -46,7 +46,7 @@
 4	
 	The paraphrase recognition task is defined as attempting to determine whether two sentences are paraphrases of each other, returning a \textsc{yes/no} answer.
 	
-	The paraphrase generation task is defined as being given an input sentence, and trying to generate a paraphrase from that input. We have not implemented this for the baseline yet, but are looking into it.%\textcolor{red}{Deciding correctness is not defined yet.}
+	The paraphrase generation task is defined as being given an input sentence, and trying to generate a paraphrase from that input. We have not implemented this for the baseline yet, but are looking into various statistical models for inducing an appropriate grammar. %\textcolor{red}{Deciding correctness is not defined yet.}
 	
 
 	
@@ -129,7 +129,7 @@
 	\section{Discussion}
 	Table \ref{tab:result} contains all the results from our experiments. Table \ref{tab:malak} contains all the results from the \mala~paper, allowing us to compare how well our implementation did. One notable difference is that our implementation does not use WordNet, while \mala~does. This must be considered when comparing our \textsc{sim + dep} to \mala' \textsc{init + wn + dep}. 
 	
-	Clearly, following the \mala~ paper has not given us comparable results, netting a 7\% lower F-score using just similarity metrics. The next step would be to determine what is causing the much lower score. However, we are still happy with the progress we currently have. Clearly from Table \ref{tab:malak} we can see that adding WordNet (\textsc{wn}) did not boost performance significantly, so we don't necessarily need to focus our attention on implementing this functionality.
+	Clearly, following the \mala~ paper has not given us comparable results, netting a 7\% lower F-score using just similarity metrics. The next step would be to determine what is causing the much lower score -- we suspect that it is an encoding issue with the Stanford classify library. However, we are still happy with the progress we currently have. Clearly from Table \ref{tab:malak} we can see that adding WordNet (\textsc{wn}) did not boost performance significantly, so we don't necessarily need to focus our attention on implementing this functionality.
 	\section{Conclusions}
 		
 	Since both \textsc{redire} and \mala~ only use na\"ive word similarity metrics for classification, we are interested in attempting to explore deeper means for paraphrase recognition. Using only similarity means that two sentences which are paraphrases of each other but don't share similar words will not be recognized as paraphrases. We want something that can relate the similarity between two paraphrases other than just the words. 
@@ -138,6 +138,7 @@
 	
 	
 	\section{Contributions}
+	Both members have spent time on all parts of the code; Maks initially created the vast majority of it, and Oliver spent most of his time refactoring, bug fixing, and building libraries.
 	
 	\begin{minipage}{.45\textwidth}
 	  ~\textbf{Maks Cegielski-Johnson}
