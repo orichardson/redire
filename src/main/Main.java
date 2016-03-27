@@ -15,11 +15,25 @@ import framework.ParaExample;
 import utensils.LOG;
 import utensils.Util;
 
+/**
+ * 
+ * @author Maks Cegielski-Johnson & Oliver Richardson
+ *
+ */
 class Main {
-	public static int MODE = 3;
+	
+	/**
+	 * Determines which features are selected for classification. 
+	 */
+	public static int MODE = 1;
 
-	public static Dataset<Boolean, Double> makeFeatureData(
-			Collection<? extends ParaExample> examples, int mode) {
+	/**
+	 * Creates a dataset for machine learning.
+	 * @param examples
+	 * @param mode
+	 * @return
+	 */
+	public static Dataset<Boolean, Double> makeFeatureData(Collection<? extends ParaExample> examples, int mode) {
 
 		Dataset<Boolean, Double> ds = new Dataset<Boolean, Double>();
 		for (ParaExample ex : examples)
@@ -27,6 +41,12 @@ class Main {
 
 		return ds;
 	}
+	
+	/**
+	 * Creates the baseline dataset for machine learning.
+	 * @param examples - training examples
+	 * @return
+	 */
 	public static Dataset<Boolean, Double> makeBaselineData(Collection<? extends ParaExample> examples) {
 		Dataset<Boolean, Double> ds = new Dataset<Boolean, Double>();
 		for (ParaExample ex : examples)
@@ -35,6 +55,11 @@ class Main {
 		return ds;
 	}
 	
+	/**
+	 * Prints the statistics from the machine learning classifier. 
+	 * @param c - Machine learning classifier
+	 * @param testd - test data set
+	 */
 	public static void printStats(Classifier<Boolean,Double> c, GeneralDataset<Boolean, Double> testd) {
 		Pair<Double, Double> pr = c.evaluatePrecisionAndRecall(testd, true);
 		LOG.m("Precision and recall: " + pr);
@@ -52,6 +77,7 @@ class Main {
 		List<MSR> trainMSR = MSR.read(training_file), testMSR = MSR.read(testing_file);
 		LOG.m("Data Loaded.");
 
+		//Calculate statistics on the training set.
 		int paras = 0, count = 0;
 		for (MSR r : trainMSR) {
 			paras += r.isPara() ? 1 : 0;
@@ -59,6 +85,7 @@ class Main {
 		}
 		System.out.println(paras + "\t" + count + "\t" + (paras / (double) count));
 
+		//Make the baseline data feature vectors
 		Dataset<Boolean, Double> fv0_train = makeBaselineData(trainMSR), fv0_test = makeBaselineData(testMSR);
 
 		// baseline

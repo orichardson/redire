@@ -5,7 +5,7 @@
 \restoreparindent
 \usepackage{bbm}
 
-\usepackage{xcolor}
+%\usepackage{xcolor}
 \usepackage{multicol}
 
 \usepackage{enumitem}
@@ -13,16 +13,20 @@
 \usepackage{graphicx}
 \usepackage{url}
 
+\usepackage{float}
+
 \usepackage{etoolbox}
 \patchcmd{\section}{\scshape}{\Large\scshape}{}{}
 
 \usepackage[width=6.5in,height=9.5in]{geometry}
 
+\newcommand{\mala}{Malakasiotis}
 
 \usepackage[bookmarks,colorlinks,breaklinks]{hyperref} 
 \usepackage{color}
 \definecolor{dullmagenta}{rgb}{0.4,0,0.4}   % #660066
 \definecolor{darkblue}{rgb}{0,0,0.4}
+\definecolor{darkred}{rgb}{0.7,0.2,0.2}
 \hypersetup{linkcolor=darkred,citecolor=blue,filecolor=dullmagenta,urlcolor=darkblue} % coloured links
 
 \setlength{\skip\footins}{2cm}
@@ -40,14 +44,15 @@
 4	
 	The paraphrase recognition task is defined as attempting to determine whether two sentences are paraphrases of each other, returning a \textsc{yes/no} answer.
 	
-	The paraphrase generation task is defined as being given an input sentence, and trying to generate a paraphrase from that input. \textcolor{red}{Deciding correctness is not defined yet.}
+	The paraphrase generation task is defined as being given an input sentence, and trying to generate a paraphrase from that input. %\textcolor{red}{Deciding correctness is not defined yet.}
 	
 
 	
 	\section{Architecture}
-	Our current implementation is inspired by a paper by Malakasiotis\cite{malakasiotis2009paraphrase}. The general structure of this implementation is as follows:
+	Our current implementation is inspired by a paper by \mala \cite{malakasiotis2009paraphrase}. The general structure of this implementation is as follows:
 	
 	\begin{enumerate}
+	\item First, we read all sentence pairs $(s_1, s_2)$ from a file.
 	\item Restructure each pair of sentences $s_1$ and $s_2$ into 10 new string transformations $t_{i,1}$ and $t_{i,2}$, maintaining the original order
 		\begin{multicols}{2}
 		\begin{enumerate}
@@ -63,7 +68,7 @@
 			\item String of all the verb soundex codes.
 		\end{enumerate}
 		\end{multicols}
-	\item For each string pair $s_1$ and $s_2$, and for each transformation of that string $t_{i,1}$ and $t_{i,2}$, we want to compute the similarity $d_i(t_{i,1},t_{i,2})$, using the metrics 
+	\item For each string pair $s_1$ and $s_2$, and for each transformation of that string $t_{i,1}$ and $t_{i,2}$, we want to compute the similarity \cite{malakasiotis2007learning} $d_i(t_{i,1},t_{i,2})$, using the metrics 
 		\begin{multicols}{2}
 		\begin{enumerate}
 		\item Levenshtein (word edit)
@@ -80,13 +85,46 @@
 	\item Next, for each pair of sentences $s_1$ and $s_2$, if $s_1$ is longer than $s_2$ we compute the substrings of $s_1$ which have the same length as $s_2$. For each substring $s_1'$ generated, we compute all of the similarities between $s_1'$ and $s_2$. We try to find which substring results in the max average similarity over all the similarity metrics, namely $s_1'^*$. Then for $s_1'^*$ we compute each of the similarities between it and $s_2$, as well as the average of all of them, resulting in 10 features. We do this for the string transformations which result in tokens, stems, POS tags, and soundex codes. This results in an additional 40 features per sentence pair (total of 130 features so far). Note that we can just swap the two strings in the discussion above if $s_2$ is larger than $s_1$. 
 	
 	\item Finally, we add three additional features to the current 130. We add a boolean feature for whether $s_1$ contains a negation, and a feature for whether $s_2$ contains negation. Then finally, we add a feature for the length ratio, defined as $\frac{\min(|s_1|, |s_2|)}{\max(|s_1|, |s_2|)}$.
+	
+	\item Optionally, we can add one more set of features. We can compute the dependency parses for both sentences $s_1$ and $s_2$. Using the dependency parses, we can calculate the following
+	$$R_1 = \frac{|\text{common dependencies}|}{|\text{dependencies in }s_1|} \qquad R_2 = \frac{|\text{common dependencies}|}{|\text{dependencies in }s_2|}$$
+	which we can both use as features, as well as the harmonic mean $\frac{2R_1R_2}{R_1 + R_2}$. 
 	\end{enumerate}
 	
 	\section{Experiments}
 	
+	Having defined how to get our similarity-based features, we can start experimenting with different combinations. First, let us define a baseline, (\textsc{base}), for which we will use the Levenshtein distance and a simple linear classifier. We can see the results of this baseline in Table \ref{tab:result}.
+	
 	\section{Results}
 	
+	\begin{table}[H]
+	\centering	
+	\begin{tabular}{|l||l||l|l|l|}
+	\hline
+	\textbf{Method} & \textbf{Accuracy} & \textbf{Precision} & \textbf{Recall} & \textbf{F-Score} \\ \hline
+	\textsc{base} & 0.64811 & 0.68442 & 0.87358 & 0.76752 \\ \hline
+	\textsc{sim} & 0.66492 & 0.72814 & 0.79163 & 0.75856 \\ \hline
+	\textsc{sim} + \textsc{dep} & 0.66492 & 0.73224 & 0.78204 & 0.75632 \\ \hline
+	\end{tabular}
+	\caption{\textsc{redire} results}\label{tab:result}
+	\end{table}
+	
+	\begin{table}[H]
+	\centering
+	\begin{tabular}{|l||l||l|l|l|}
+	\hline
+	\textbf{Method} & \textbf{Accuracy} & \textbf{Precision} & \textbf{Recall} & \textbf{F-Score} \\ \hline
+	\textsc{base} & 0.6904 & 0.7242 & 0.8631 & 0.7876 \\ \hline
+	\textsc{init} & 0.7519 & 0.7851 & 0.8631 & 0.8223 \\ \hline
+	\textsc{init} + \textsc{wn} & 0.7548 & 0.7891 & 0.8614 & 0.8237 \\ \hline
+	\textsc{init} + \textsc{wn} + \textsc{dep} & 0.7935 & 0.7891 & 0.8675 & 0.8288 \\ \hline
+	\end{tabular}
+	\caption{\mala~results}\label{tab:malak}
+	\end{table}
 
+	\section{Conclusions}
+	
+	Clearly, following the \mala~ paper has not given us comparable results, netting a 7\% lower F-score using just similarity metrics. The next step would be to determine what is causing the much lower score. However, we are still happy with the progress we currently have. Clearly from Table \ref{tab:malak} we can see that adding WordNet (\textsc{wn}) did not boost performance significantly, so we don't necessarily need to focus our attention on implementing this functionality. However, both \textsc{redire} and \mala~ for \textsc{SIM} and \textsc{INIT} respectively only use na\"ive word similarity metrics. 
 	
 	\section{Contributions}
 	

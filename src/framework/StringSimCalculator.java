@@ -18,13 +18,20 @@ import org.simmetrics.MultisetMetric;
  *
  */
 public class StringSimCalculator {
-	public static final StringMetric[] METRICES;
+	/**
+	 * 
+	 */
+	public static final StringMetric[] METRICS;
+	
+	/**
+	 * Access for Levenshtein distance.
+	 */
 	public static final StringMetric LEV;
 
 	static {
 		System.out.print("Initializing String  Distances..");
 		LEV = levenshtein();
-		METRICES = new StringMetric[] { LEV, jaroWinkler(), Manhattan.makeStringMetric(),
+		METRICS = new StringMetric[] { LEV, jaroWinkler(), Manhattan.makeStringMetric(),
 				euclideanDistance(), cosineSimilarity(), qGramsDistance(), overlapCoefficient(),
 				dice(), jaccard() };
 		System.out.print(".. done.\n");
@@ -44,14 +51,22 @@ public class StringSimCalculator {
 	 * 8 - jaccard
 	 */
 	public static double[] computeAll(String s1, String s2) {
-		double[] ret = new double[METRICES.length];
+		double[] ret = new double[METRICS.length];
 
 		for (int i = 0; i < ret.length; i++)
-			ret[i] = METRICES[i].compare(s1, s2);
+			ret[i] = METRICS[i].compare(s1, s2);
 
 		return ret;
 	}
 
+	/**
+	 * 
+	 * @author Maks Cegielski-Johnson & Oliver Richardson
+	 *
+	 * Allows for computing the Manhattan similarity between two strings. 
+	 *
+	 * @param <T>
+	 */
 	public static final class Manhattan<T> implements MultisetMetric<T>, MultisetDistance<T> {
 
 		@Override

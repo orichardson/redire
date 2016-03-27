@@ -164,6 +164,12 @@ public class Features {
 		return argmax;
 	}
 
+	/**
+	 * Compute the baseline feature (Levenshtein Edit Distance) for two strings. 
+	 * @param s1
+	 * @param s2
+	 * @return
+	 */
 	public static List<Double> computeBaselineFV(String s1, String s2) {
 		return Collections.nCopies(1, (double) StringSimCalculator.LEV.compare(s1, s2));
 	}
