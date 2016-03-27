@@ -23,7 +23,7 @@ Microsoft Research.
 
 \bibitem{soundex}
 R.~Sedgewick and K.~Wayne.
-\newblock {Introduction to Programming in Java}: Soundex.
+\newblock {Introduction to Programming in Java}: {Soundex}.
 \newblock \url{http://introcs.cs.princeton.edu/java/31datatype/Soundex.java}.
 
 \end{thebibliography}
