@@ -1,8 +1,5 @@
 \begin{thebibliography}{1}
 
-\bibitem{soundex}
-
-
 \bibitem{malakasiotis2009paraphrase}
 Prodromos Malakasiotis.
 \newblock Paraphrase recognition using machine learning to combine similarity
@@ -17,5 +14,16 @@ Prodromos Malakasiotis and Ion Androutsopoulos.
 \newblock In {\em Proceedings of the ACL-PASCAL Workshop on Textual Entailment
   and Paraphrasing}, pages 42--47. Association for Computational Linguistics,
   2007.
+
+\bibitem{msrp}
+Microsoft Research.
+\newblock Microsoft research paraphrase corpus.
+\newblock
+  \url{http://research.microsoft.com/en-us/downloads/607d14d9-20cd-47e3-85bc-a2f65cd28042/}.
+
+\bibitem{soundex}
+R.~Sedgewick and K.~Wayne.
+\newblock {Introduction to Programming in Java}: Soundex.
+\newblock \url{http://introcs.cs.princeton.edu/java/31datatype/Soundex.java}.
 
 \end{thebibliography}
