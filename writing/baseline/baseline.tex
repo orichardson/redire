@@ -1,9 +1,9 @@
 \documentclass[11pt, reqno]{amsart}
-
-\edef\restoreparindent{\parindent=\the\parindent\relax}
+\usepackage[width=6.5in,height=9.5in]{geometry}
+%\edef\restoreparindent{\parindent=\the\parindent\relax}
 \usepackage{parskip}
-\restoreparindent
-\usepackage{bbm}
+%\restoreparindent
+%\usepackage{bbm}
 
 %\usepackage{xcolor}
 \usepackage{multicol}
@@ -16,14 +16,14 @@
 \usepackage{float}
 
 \usepackage{etoolbox}
-\patchcmd{\section}{\scshape}{\Large\scshape}{}{}
+\patchcmd{\section}{\scshape}{\large\scshape}{}{}
 
-\usepackage[width=6.5in,height=9.5in]{geometry}
-
-\newcommand{\mala}{Malakasiotis}
 
 \usepackage[bookmarks,colorlinks,breaklinks]{hyperref} 
 \usepackage{color}
+
+\newcommand{\mala}{Malakasiotis}
+
 \definecolor{dullmagenta}{rgb}{0.4,0,0.4}   % #660066
 \definecolor{darkblue}{rgb}{0,0,0.4}
 \definecolor{darkred}{rgb}{0.7,0.2,0.2}
@@ -32,8 +32,10 @@
 \setlength{\skip\footins}{2cm}
 
 \begin{document}
-	\title{\LARGE CS6390 Project Proposal: REDIRE/GIRAF}
-	\author{\textsc Oliver Richardson \hspace{2em} Maks Cegielski-Johnson }
+	\title{REDIRE --- Baseline Report}
+	
+	\author{\textsc Oliver Richardson \hspace{2em} Maks Cegielski-Johnson}
+	
 	\maketitle 
 	
 	\vspace{-2em}
@@ -49,11 +51,11 @@
 
 	
 	\section{Architecture}
-	Our current implementation is inspired by a paper by \mala \cite{malakasiotis2009paraphrase}. The general structure of this implementation is as follows:
+	Our current implementation (\textsc{sim}) is inspired by the \textsc{init} method in a paper by \mala \cite{malakasiotis2009paraphrase}. For the baseline, we used the Microsoft Research Paraphrase Corpus\cite{msrp} (\textsc{msrp})  The general structure of this implementation relies on transforming a pair of sentences to different linguistic representations and then computing a variety of similarity metrics between each representation pair. This procedure is described below.
 	
 	\begin{enumerate}
-	\item First, we read all sentence pairs $(s_1, s_2)$ from a file.
-	\item Restructure each pair of sentences $s_1$ and $s_2$ into 10 new string transformations $t_{i,1}$ and $t_{i,2}$, maintaining the original order
+	\item First, read all sentence pairs $(s_1, s_2)$ from a file.
+	\item Restructure each pair of sentences $s_1$ and $s_2$ into 10 new string transformations $t_{i,1}$ and $t_{i,2}$, maintaining the original syntactic order of the sentence.
 		\begin{multicols}{2}
 		\begin{enumerate}
 			\item String of the tokens
@@ -68,7 +70,7 @@
 			\item String of all the verb soundex codes.
 		\end{enumerate}
 		\end{multicols}
-	\item For each string pair $s_1$ and $s_2$, and for each transformation of that string $t_{i,1}$ and $t_{i,2}$, we want to compute the similarity \cite{malakasiotis2007learning} $d_i(t_{i,1},t_{i,2})$, using the metrics 
+	\item For each string pair $s_1$ and $s_2$, and for each transformation of that string $t_{i,1}$ and $t_{i,2}$, we want to compute the similarity\cite{malakasiotis2007learning} $d_i(t_{i,1},t_{i,2})$, using the metrics 
 		\begin{multicols}{2}
 		\begin{enumerate}
 		\item Levenshtein (word edit)
@@ -86,14 +88,16 @@
 	
 	\item Finally, we add three additional features to the current 130. We add a boolean feature for whether $s_1$ contains a negation, and a feature for whether $s_2$ contains negation. Then finally, we add a feature for the length ratio, defined as $\frac{\min(|s_1|, |s_2|)}{\max(|s_1|, |s_2|)}$.
 	
-	\item Optionally, we can add one more set of features. We can compute the dependency parses for both sentences $s_1$ and $s_2$. Using the dependency parses, we can calculate the following
+	\item \mala~ then discusses using a dependency grammar for features (\textsc{dep}), which we found easy to implement as well. We can compute the dependency parses for both sentence $s_1$ and sentence $s_2$. Using the dependency parses, we can calculate the following
 	$$R_1 = \frac{|\text{common dependencies}|}{|\text{dependencies in }s_1|} \qquad R_2 = \frac{|\text{common dependencies}|}{|\text{dependencies in }s_2|}$$
-	which we can both use as features, as well as the harmonic mean $\frac{2R_1R_2}{R_1 + R_2}$. 
+	where $R_1$ and $R_2$ can both be used as features. We can then also use the harmonic mean $\frac{2R_1R_2}{R_1 + R_2}$ as the final feature. 
 	\end{enumerate}
 	
 	\section{Experiments}
 	
-	Having defined how to get our similarity-based features, we can start experimenting with different combinations. First, let us define a baseline, (\textsc{base}), for which we will use the Levenshtein distance and a simple linear classifier. We can see the results of this baseline in Table \ref{tab:result}.
+	Having defined how to get our similarity-based features, we can start experimenting with different combinations. First, let us define a baseline experiment, (\textsc{base}), for which we will use the Levenshtein distance and a simple linear classifier. This baseline will allow us to see how a na\"ive approach will work on the our dataset. 
+	
+	\textsc{sim} is the method discussed above which uses string transformations and string similarity metrics. This experiment will allow us to see how well using only string similarity will work for paraphrasing. \textsc{dep} introduces the dependency grammar for a few features, allowing the use of the structure of the sentence for paraphrase recognition. 
 	
 	\section{Results}
 	
@@ -119,14 +123,28 @@
 	\textsc{init} + \textsc{wn} & 0.7548 & 0.7891 & 0.8614 & 0.8237 \\ \hline
 	\textsc{init} + \textsc{wn} + \textsc{dep} & 0.7935 & 0.7891 & 0.8675 & 0.8288 \\ \hline
 	\end{tabular}
-	\caption{\mala~results}\label{tab:malak}
+	\caption{\mala~results \cite{malakasiotis2009paraphrase}}\label{tab:malak}
 	\end{table}
-
-	\section{Conclusions}
 	
-	Clearly, following the \mala~ paper has not given us comparable results, netting a 7\% lower F-score using just similarity metrics. The next step would be to determine what is causing the much lower score. However, we are still happy with the progress we currently have. Clearly from Table \ref{tab:malak} we can see that adding WordNet (\textsc{wn}) did not boost performance significantly, so we don't necessarily need to focus our attention on implementing this functionality. However, both \textsc{redire} and \mala~ for \textsc{SIM} and \textsc{INIT} respectively only use na\"ive word similarity metrics. 
+	\section{Discussion}
+	Table \ref{tab:result} contains all the results from our experiments. Table \ref{tab:malak} contains all the results from the \mala~paper, allowing us to compare how well our implementation did. One notable difference is that our implementation does not use WordNet, while \mala~does. This must be considered when comparing our \textsc{sim + dep} to \mala' \textsc{init + wn + dep}. 
+	
+	Clearly, following the \mala~ paper has not given us comparable results, netting a 7\% lower F-score using just similarity metrics. The next step would be to determine what is causing the much lower score. However, we are still happy with the progress we currently have. Clearly from Table \ref{tab:malak} we can see that adding WordNet (\textsc{wn}) did not boost performance significantly, so we don't necessarily need to focus our attention on implementing this functionality.
+	\section{Conclusions}
+		
+	Since both \textsc{redire} and \mala~ only use na\"ive word similarity metrics for classification, we are interested in attempting to explore deeper means for paraphrase recognition. Using only similarity means that two sentences which are paraphrases of each other but don't share similar words will not be recognized as paraphrases. We want something that can relate the similarity between two paraphrases other than just the words. 
+	
+	One way we can attempt to achieve this is through the use of a dependency grammar and WordNet. Seeing as this is what the \mala~paper does as well, we need to consider different ways of representing similarity using both tools. If we can achieve a adequate means of doing so, then not only will this help us boost performance for our paraphrase recognition, but will also allow us to begin to approach the problem of paraphrase generation.
+	
 	
 	\section{Contributions}
+	
+	\begin{minipage}{.5\textwidth}
+	  TEXT 1
+	\end{minipage}% This must go next to `\end{minipage}`
+	\begin{minipage}{.5\textwidth}
+	  TEXT 2
+	\end{minipage}
 	
 	\bibliographystyle{plain}
 	\bibliography{references}
