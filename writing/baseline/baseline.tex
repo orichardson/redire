@@ -46,12 +46,12 @@
 4	
 	The paraphrase recognition task is defined as attempting to determine whether two sentences are paraphrases of each other, returning a \textsc{yes/no} answer.
 	
-	The paraphrase generation task is defined as being given an input sentence, and trying to generate a paraphrase from that input. %\textcolor{red}{Deciding correctness is not defined yet.}
+	The paraphrase generation task is defined as being given an input sentence, and trying to generate a paraphrase from that input. We have not implemented this for the baseline yet, but are looking into it.%\textcolor{red}{Deciding correctness is not defined yet.}
 	
 
 	
 	\section{Architecture}
-	Our current implementation (\textsc{sim}) is inspired by the \textsc{init} method in a paper by \mala \cite{malakasiotis2009paraphrase}. For the baseline, we used the Microsoft Research Paraphrase Corpus\cite{msrp} (\textsc{msrp})  The general structure of this implementation relies on transforming a pair of sentences to different linguistic representations and then computing a variety of similarity metrics between each representation pair. This procedure is described below.
+	Our current implementation (\textsc{sim}) is inspired by the \textsc{init} method in a paper by \mala \cite{malakasiotis2009paraphrase}. For the baseline, we used the Microsoft Research Paraphrase Corpus\cite{msrp} (\textsc{msrp}). We make use of the StanfordNLP framework\cite{manning-EtAl:2014:P14-5} for most of our NLP functionality. The general structure of this implementation relies on transforming a pair of sentences to different linguistic representations and then computing a variety of similarity metrics between each representation pair. This procedure is described below.
 	
 	\begin{enumerate}
 	\item First, read all sentence pairs $(s_1, s_2)$ from a file.
