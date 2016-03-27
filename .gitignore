@@ -1,4 +1,4 @@
-writing/**/*.tex
+writing/*
 !writing/**/*.tex
 data/ppdb/*
 bin/
