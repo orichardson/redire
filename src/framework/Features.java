@@ -1,11 +1,14 @@
 package framework;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import edu.stanford.nlp.ling.RVFDatum;
+import edu.stanford.nlp.stats.ClassicCounter;
 import utensils.Soundex;
 import utensils.StopWatch;
 import utensils.Util;
@@ -186,7 +189,7 @@ public class Features {
 	 * @return
 	 */
 	public static List<Double> computeBaselineFV(String s1, String s2) {
-		return Collections.nCopies(1, (double) StringSimCalculator.LEV.compare(s1, s2));
+		return Arrays.asList((double) StringSimCalculator.LEV.compare(s1, s2));
 	}
 
 	/**
@@ -198,19 +201,21 @@ public class Features {
 	 * 2. INIT+WN <br/>
 	 * 3. INIT+WN+DEP<br/>
 	 */
-	public static List<Double> computeFullFeatureVector(String s1, String s2, int mode) {
+	public static RVFDatum<Integer, String> computeFullFeatureVector(String s1, String s2, int mode, int label) {
 		// Generates all the string for which we compute metrics.
 		List<String> trans1 = generateFeatures(s1), trans2 = generateFeatures(s2);
 		int N = trans1.size();
 
 		// create the return vector; the number is a guess of the required length
-		ArrayList<Double> vector = new ArrayList<Double>(133);
+		ClassicCounter<String> vector = new ClassicCounter<>(133);
 
 		// Compute the distances for each pair of transformed sentences.
-		for (int i = 0; i < N; i++)
-			for (double d : StringSimCalculator.computeAll(trans1.get(i), trans2.get(i)))
-				vector.add(d);
+		for (int i = 0; i < N; i++) {
+			double[] dists = StringSimCalculator.computeAll(trans1.get(i), trans2.get(i));
+			for (int j = 0; j < dists.length; j++)
+				vector.incrementCount("Dist" + i + "|" + j, dists[j]);
 
+		}
 		// For the first 4 transformations, find the subset that maximizes the
 		// similarity. Compute these values and store it.
 		for (int i = 0; i < 4; i++) {
@@ -234,24 +239,24 @@ public class Features {
 			// Also compute the average of all the similarities.
 			double tot = 0;
 
-			for (double d : distances) {
-				tot += d;
-				vector.add(d);
+			for (int j = 0; j < distances.length; j++) {
+				tot += distances[j];
+				vector.incrementCount("Sub" + i + "|" + j, distances[j]);
 			}
-			vector.add(tot / distances.length);
+			vector.incrementCount("Sub" + i+"~AVG", (tot / distances.length));
 		}
 		// Regular expression to search for negation in a sentence.
 		Pattern negate = Pattern.compile("(.*(n't)($|\\s))|([N|n]ot)");
 		// looks for instances of n't and for Not.
 
 		// Negation in S1
-		vector.add(negate.matcher(s1).find() ? 1d : 0d);
+		vector.incrementCount("NegFirst", negate.matcher(s1).find() ? 1d : 0d);
 		// Negation in S2
-		vector.add(negate.matcher(s2).find() ? 1d : 0d);
+		vector.incrementCount("NegLast", negate.matcher(s2).find() ? 1d : 0d);
 
 		// ratio = min(|S1|,|S2|)/max(|S1|,|S2|)
 		double t1len = trans1.get(0).length(), t2len = trans2.get(0).length();
-		vector.add(Math.min(t1len, t2len) / Math.max(t1len, t2len));
+		vector.incrementCount("Ratio", Math.min(t1len, t2len) / Math.max(t1len, t2len));
 
 		if (mode == 2 || mode == 3) {
 
@@ -272,9 +277,11 @@ public class Features {
 			double R2 = common / dep2size;
 			double FR = (2 * R1 * R2) / (R1 + R2);
 
-			Collections.addAll(vector, R1, R2, FR);
+			vector.incrementCount("DepR1", R1);
+			vector.incrementCount("DepR2", R2);
+			vector.incrementCount("DepFR", FR);
 		}
 
-		return vector;
+		return new RVFDatum<>(vector, label);
 	}
 }

@@ -22,7 +22,8 @@ public class StringSimCalculator {
 	 * 
 	 */
 	public static final StringMetric[] METRICS;
-	
+	public static final String[] NAMES;
+
 	/**
 	 * Access for Levenshtein distance.
 	 */
@@ -34,6 +35,8 @@ public class StringSimCalculator {
 		METRICS = new StringMetric[] { LEV, jaroWinkler(), Manhattan.makeStringMetric(),
 				euclideanDistance(), cosineSimilarity(), qGramsDistance(), overlapCoefficient(),
 				dice(), jaccard() };
+		NAMES = new String[] { "Levenshtein", "JaroWinkler", "Manhattan", "Euclidean", "Cosine", "3Gram", "Overlap",
+				"Dice", "Jaccard" };
 		System.out.print(".. done.\n");
 	}
 
@@ -63,7 +66,7 @@ public class StringSimCalculator {
 	 * 
 	 * @author Maks Cegielski-Johnson & Oliver Richardson
 	 *
-	 * Allows for computing the Manhattan similarity between two strings. 
+	 *         Allows for computing the Manhattan similarity between two strings.
 	 *
 	 * @param <T>
 	 */
