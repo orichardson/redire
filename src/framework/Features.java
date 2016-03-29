@@ -243,7 +243,7 @@ public class Features {
 				tot += distances[j];
 				vector.incrementCount("Sub" + i + "|" + j, distances[j]);
 			}
-			vector.incrementCount("Sub" + i+"|AVG", (tot / distances.length));
+			vector.incrementCount("Sub" + i+"~AVG", (tot / distances.length));
 		}
 		// Regular expression to search for negation in a sentence.
 		Pattern negate = Pattern.compile("(.*(n't)($|\\s))|([N|n]ot)");

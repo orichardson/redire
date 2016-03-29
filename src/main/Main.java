@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -122,7 +123,7 @@ class Main {
 			train = trainFull.sampleDataset(0, 1.0, false);
 			test = trainFull.sampleDataset(0, 1.0, false);
 
-			Set<String> toKeep = new HashSet<>(Arrays.asList(spec.split(",")));
+			Set<String> toKeep = new HashSet<>(Arrays.asList(spec.split(", ")));
 			train.retainFeatures(toKeep);
 			test.retainFeatures(toKeep);
 		} else
@@ -141,21 +142,24 @@ class Main {
 
 	public static HashMap<String, String> formAblations(Index<String> featureLabels) {
 		// form descriptions of all ablations
-		HashMap<String, String> ablations = new HashMap<>();
-		
+		HashMap<String, String> ablations = new LinkedHashMap<>();
+
 		ablations.put("Dist + Sub + Neg + Ratio + Dep", null);
 		ablations.put("Dist + Sub + Neg + Ratio", "");
 		ablations.put("Sub + Neg + Ratio + Dep", "");
 		ablations.put("Dist + Neg", "");
 		ablations.put("Dist", "");
 		ablations.put("Sub", "");
-		for( String metric : StringSimCalculator.NAMES)
-			ablations.put("Metric:"+metric, "");
-		
-		for(String feature : featureLabels) {
-			for(String key : ablations.keySet()) {
-				if(key.contains(feature.substring(0,3)))
-					ablations.put(key, ablations.get(key)+", "+feature);
+		for (String metric : StringSimCalculator.NAMES)
+			ablations.put("Metric:" + metric, "");
+
+		for (String feature : featureLabels) {
+			for (String key : ablations.keySet()) {
+				int bar = feature.indexOf("|");
+				if ((bar > 0 && key.startsWith("Metric:")
+						&& key.contains(StringSimCalculator.NAMES[Integer.parseInt(feature.substring(bar + 1))]))
+						|| key.contains(feature.substring(0, 3)))
+					ablations.put(key, ablations.get(key) + ", " + feature);
 			}
 		}
 
@@ -181,14 +185,12 @@ class Main {
 		System.setErr(NORMERR);
 		LOG.m("...done");
 
-		fv_test.printFullFeatureMatrixWithValues(new PrintWriter(System.out));
-
 		StringBuilder results = new StringBuilder();
 
 		for (Entry<String, String> test : formAblations(fv_train.featureIndex).entrySet())
-			results.append(test.getKey() + " & " + runAblativeTest(fv_train, fv_test, test.getValue()));
+			results.append(test.getKey() + " & " + runAblativeTest(fv_train, fv_test, test.getValue()) + "\n");
 
-		System.out.println(results);
+		System.out.println("\n\n" + results);
 
 //		System.out.println("\n\nToken: " + Features.tokenTime.checkS());
 //		System.out.println("Stem: " + Features.stemTime.checkS());
