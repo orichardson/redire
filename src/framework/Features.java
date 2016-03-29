@@ -1,6 +1,7 @@
 package framework;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -186,7 +187,7 @@ public class Features {
 	 * @return
 	 */
 	public static List<Double> computeBaselineFV(String s1, String s2) {
-		return Collections.nCopies(1, (double) StringSimCalculator.LEV.compare(s1, s2));
+		return Arrays.asList((double) StringSimCalculator.LEV.compare(s1, s2));
 	}
 
 	/**

@@ -1,9 +1,13 @@
 package main;
 
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import edu.stanford.nlp.classify.Classifier;
 import edu.stanford.nlp.classify.GeneralDataset;
@@ -30,6 +34,11 @@ class Main {
 	 * Determines which features are selected for classification.
 	 */
 	public static int MODE = 1;
+	// to suppress classifier output.
+	public static final PrintStream DEVNULL = new PrintStream(new OutputStream() {
+		public void write(int b) {}
+	});
+	public static final PrintStream NORMERR = System.out;
 
 	/**
 	 * Creates a dataset for machine learning.
@@ -66,10 +75,10 @@ class Main {
 
 	public static <E> RVFDatum<E, String> dumbConversion(List<Double> list, E label) {
 		ClassicCounter<String> counter = new ClassicCounter<String>();
+		counter.incrementCount("BIAS");
 
-		for (int i = 0; i < list.size(); i++) {
+		for (int i = 0; i < list.size(); i++)
 			counter.incrementCount("F" + i, list.get(i));
-		}
 
 		return new RVFDatum<E, String>(counter, label);
 	}
@@ -82,13 +91,49 @@ class Main {
 	 * @param testd
 	 *            - test data set
 	 */
-	public static <A, B> void printStats(Classifier<A, B> c, GeneralDataset<A, B> testd) {
-		LOG.m("Accuracy: " + c.evaluateAccuracy(testd));
+	public static <A, B> String stats(Classifier<A, B> c, GeneralDataset<A, B> testd) {
+		double acc = c.evaluateAccuracy(testd);
+		double prec = -1, rec = -1;
+
+		LOG.m("Accuracy: " + acc);
 		LOG.m("Precision & Recall & F-measure");
 		for (A val : testd.labelIndex()) {
 			Pair<Double, Double> pr = c.evaluatePrecisionAndRecall(testd, val);
+			if (prec < 0) {
+				prec = pr.first;
+				rec = pr.second;
+			}
 			LOG.m(pr.first + " & " + pr.second + " & " + ((2 * pr.first * pr.second) / (pr.first + pr.second)));
 		}
+		return acc + " & " + prec + " & " + rec;
+	}
+
+	public static <A> String runAblativeTest(GeneralDataset<A, String> trainFull,
+			GeneralDataset<A, String> testFull, String spec) {
+
+		System.out.println();
+		GeneralDataset<A, String> train = trainFull, test = testFull;
+
+		if (spec != null) {
+			LOG.m("Starting ablative test " + spec);
+			train = trainFull.sampleDataset(0, 1.0, false);
+			test = trainFull.sampleDataset(0, 1.0, false);
+
+			Set<String> toKeep = new HashSet<>(Arrays.asList(spec.split(",")));
+			train.retainFeatures(toKeep);
+			test.retainFeatures(toKeep);
+		} else
+			LOG.m("Running full classifier...");
+
+		LogisticClassifierFactory<A, String> factory = new LogisticClassifierFactory<>();
+		System.setErr(DEVNULL);
+		LogisticClassifier<A, String> classifier = factory.trainClassifier(train);
+		System.setErr(NORMERR);
+
+		LOG.m("... Trained");
+		LOG.m("Weights: " + Arrays.toString(classifier.getWeights()));
+
+		return stats(classifier, test);
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -101,47 +146,27 @@ class Main {
 		List<MSR> trainMSR = MSR.read(training_file), testMSR = MSR.read(testing_file);
 		LOG.m("Data Loaded.");
 
-		//Calculate statistics on the training set.
-		int paras = 0, count = 0;
-		for (MSR r : trainMSR) {
-			paras += r.isPara() ? 1 : 0;
-			count += 1;
-		}
-		System.out.println(paras + "\t" + count + "\t" + (paras / (double) count));
-
-		//Make the baseline data feature vectors
-		RVFDataset<Integer, String> fv0_train = makeBaselineData(trainMSR), fv0_test = makeBaselineData(testMSR);
-
-		// baseline
-		LOG.m("Base Line: ");
-		LogisticClassifier<Integer, String> classifier0 = new LogisticClassifierFactory<Integer, String>()
-				.trainClassifier(fv0_train);
-		LOG.m("Classifier Trained");
-		printStats(classifier0, fv0_test);
-		
-		LOG.m(Arrays.toString(classifier0.getWeights()));
-
 		// actual classifier
+		LOG.m("Making Full Feature Vectors...");
+		System.setErr(DEVNULL);
 		RVFDataset<Integer, String> fv_train = makeFeatureData(trainMSR, MODE),
 				fv_test = makeFeatureData(testMSR, MODE);
-		Classifier<Integer, String> classifier = new LogisticClassifierFactory<Integer, String>()
-				.trainClassifier(fv_train);
-		LOG.m("Full classifier trained");
-		printStats(classifier, fv_test);
+		System.setErr(NORMERR);
+		LOG.m("...done");
+		
+		fv_test.printFullFeatureMatrixWithValues(new PrintWriter(System.out));
 
-		System.out.println("\n\nToken: " + Features.tokenTime.checkS());
-		System.out.println("Stem: " + Features.stemTime.checkS());
-		System.out.println("Soundex: " + Features.soundexTime.checkS());
-		System.out.println("POS: " + Features.posTime.checkS());
+		StringBuilder results = new StringBuilder();
+		results.append("FULL SYSTEM "+ runAblativeTest(fv_train, fv_test, null));
+		results.append("FULL SYSTEM "+ runAblativeTest(fv_train, fv_test, null));
+		results.append("FULL SYSTEM "+ runAblativeTest(fv_train, fv_test, null));
+		results.append("FULL SYSTEM "+ runAblativeTest(fv_train, fv_test, null));
+		
+		System.out.println(results);
 
-//		System.out.println(Arrays.deepToString(fv0_train.getDataArray()));
-//		fv0_train.printSparseFeatureMatrix();
-//		System.out.println("\n***********************************\n");
-//		fv_train.printSparseFeatureMatrix();
-
-		fv0_train.printSVMLightFormat(new PrintWriter("out/msr_para0.train"));
-		fv0_test.printSVMLightFormat(new PrintWriter("out/msr_para0.test"));
-		fv_train.printSVMLightFormat(new PrintWriter("out/msr_para.train"));
-		fv_test.printSVMLightFormat(new PrintWriter("out/msr_para.test"));
+//		System.out.println("\n\nToken: " + Features.tokenTime.checkS());
+//		System.out.println("Stem: " + Features.stemTime.checkS());
+//		System.out.println("Soundex: " + Features.soundexTime.checkS());
+//		System.out.println("POS: " + Features.posTime.checkS());
 	}
 }
