@@ -5,8 +5,10 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import edu.stanford.nlp.classify.Classifier;
@@ -16,10 +18,12 @@ import edu.stanford.nlp.classify.LogisticClassifierFactory;
 import edu.stanford.nlp.classify.RVFDataset;
 import edu.stanford.nlp.ling.RVFDatum;
 import edu.stanford.nlp.stats.ClassicCounter;
+import edu.stanford.nlp.util.Index;
 import edu.stanford.nlp.util.Pair;
 import framework.Features;
 import framework.MSR;
 import framework.ParaExample;
+import framework.StringSimCalculator;
 import utensils.LOG;
 import utensils.Util;
 
@@ -51,8 +55,7 @@ class Main {
 
 		RVFDataset<Integer, String> ds = new RVFDataset<>();
 		for (ParaExample ex : examples)
-			ds.add(dumbConversion(Features.computeFullFeatureVector(ex.first(), ex.second(), mode),
-					ex.isPara() ? 1 : -1));
+			ds.add(Features.computeFullFeatureVector(ex.first(), ex.second(), mode, ex.isPara() ? 1 : -1));
 
 		return ds;
 	}
@@ -136,6 +139,30 @@ class Main {
 		return stats(classifier, test);
 	}
 
+	public static HashMap<String, String> formAblations(Index<String> featureLabels) {
+		// form descriptions of all ablations
+		HashMap<String, String> ablations = new HashMap<>();
+		
+		ablations.put("Dist + Sub + Neg + Ratio + Dep", null);
+		ablations.put("Dist + Sub + Neg + Ratio", "");
+		ablations.put("Sub + Neg + Ratio + Dep", "");
+		ablations.put("Dist + Neg", "");
+		ablations.put("Dist", "");
+		ablations.put("Sub", "");
+		for( String metric : StringSimCalculator.NAMES)
+			ablations.put("Metric:"+metric, "");
+		
+		for(String feature : featureLabels) {
+			for(String key : ablations.keySet()) {
+				if(key.contains(feature.substring(0,3)))
+					ablations.put(key, ablations.get(key)+", "+feature);
+			}
+		}
+
+		return ablations;
+
+	}
+
 	public static void main(String[] args) throws Exception {
 		Util.initialize();
 
@@ -153,15 +180,14 @@ class Main {
 				fv_test = makeFeatureData(testMSR, MODE);
 		System.setErr(NORMERR);
 		LOG.m("...done");
-		
+
 		fv_test.printFullFeatureMatrixWithValues(new PrintWriter(System.out));
 
 		StringBuilder results = new StringBuilder();
-		results.append("FULL SYSTEM "+ runAblativeTest(fv_train, fv_test, null));
-		results.append("FULL SYSTEM "+ runAblativeTest(fv_train, fv_test, null));
-		results.append("FULL SYSTEM "+ runAblativeTest(fv_train, fv_test, null));
-		results.append("FULL SYSTEM "+ runAblativeTest(fv_train, fv_test, null));
-		
+
+		for (Entry<String, String> test : formAblations(fv_train.featureIndex).entrySet())
+			results.append(test.getKey() + " & " + runAblativeTest(fv_train, fv_test, test.getValue()));
+
 		System.out.println(results);
 
 //		System.out.println("\n\nToken: " + Features.tokenTime.checkS());
