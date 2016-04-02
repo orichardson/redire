@@ -42,6 +42,15 @@ public class Util {
 		parser = DependencyParser.loadFromModelFile(DependencyParser.DEFAULT_MODEL);
 	}
 
+	public static Collection<TypedDependency> getTypedDependency(String sentence)
+	{
+		List<TaggedWord> tagged = tagger.tagSentence(createWordList(sentence));
+		GrammaticalStructure gs = parser.predict(tagged);
+		Collection<TypedDependency> tds = gs.allTypedDependencies();
+		
+		return tds;
+	}
+	
 	public static HashSet<NormalizedTypedDependency> getDependencySet(String sentence) {
 		List<TaggedWord> tagged = tagger.tagSentence(createWordList(sentence));
 		GrammaticalStructure gs = parser.predict(tagged);
