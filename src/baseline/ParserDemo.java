@@ -1,4 +1,4 @@
-package main;
+package baseline;
 
 import java.io.StringReader;
 import java.util.Collection;

@@ -1,11 +1,10 @@
-package main;
+package baseline;
 
 import java.util.Scanner;
 
 import edu.stanford.nlp.classify.LogisticClassifier;
 import edu.stanford.nlp.classify.RVFDataset;
 import edu.stanford.nlp.stats.Counter;
-import framework.Features;
 import framework.MSR;
 import utensils.LOG;
 import utensils.Util;

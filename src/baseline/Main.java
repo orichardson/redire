@@ -1,4 +1,4 @@
-package main;
+package baseline;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -20,7 +20,6 @@ import edu.stanford.nlp.ling.RVFDatum;
 import edu.stanford.nlp.stats.ClassicCounter;
 import edu.stanford.nlp.util.Index;
 import edu.stanford.nlp.util.Pair;
-import framework.Features;
 import framework.MSR;
 import framework.ParaExample;
 import framework.StringSimCalculator;

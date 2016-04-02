@@ -1,4 +1,4 @@
-package framework;
+package baseline;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,6 +9,8 @@ import java.util.regex.Pattern;
 
 import edu.stanford.nlp.stats.ClassicCounter;
 import edu.stanford.nlp.stats.Counter;
+import framework.NormalizedTypedDependency;
+import framework.StringSimCalculator;
 import utensils.Soundex;
 import utensils.StopWatch;
 import utensils.Util;
