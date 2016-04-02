@@ -7,8 +7,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import edu.stanford.nlp.ling.RVFDatum;
 import edu.stanford.nlp.stats.ClassicCounter;
+import edu.stanford.nlp.stats.Counter;
 import utensils.Soundex;
 import utensils.StopWatch;
 import utensils.Util;
@@ -201,7 +201,7 @@ public class Features {
 	 * 2. INIT+WN <br/>
 	 * 3. INIT+WN+DEP<br/>
 	 */
-	public static RVFDatum<Integer, String> computeFullFeatureVector(String s1, String s2, int mode, int label) {
+	public static Counter<String> computeFullFeatureVector(String s1, String s2, int mode) {
 		// Generates all the string for which we compute metrics.
 		List<String> trans1 = generateFeatures(s1), trans2 = generateFeatures(s2);
 		int N = trans1.size();
@@ -282,6 +282,6 @@ public class Features {
 			vector.incrementCount("DepFR", FR);
 		}
 
-		return new RVFDatum<>(vector, label);
+		return vector;
 	}
 }

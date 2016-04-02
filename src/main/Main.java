@@ -58,7 +58,8 @@ class Main {
 
 		RVFDataset<Integer, String> ds = new RVFDataset<>();
 		for (ParaExample ex : examples)
-			ds.add(Features.computeFullFeatureVector(ex.first(), ex.second(), mode, ex.isPara() ? 1 : -1));
+			ds.add(new RVFDatum<>(Features.computeFullFeatureVector(ex.first(), ex.second(), mode),
+					ex.isPara() ? 1 : -1));
 
 		return ds;
 	}
@@ -111,7 +112,17 @@ class Main {
 			}
 			LOG.m(pr.first + " & " + pr.second + " & " + ((2 * pr.first * pr.second) / (pr.first + pr.second)));
 		}
-		return acc + " & " + prec + " & " + rec;
+		return acc + " & " + prec + " & " + rec + " & " + (2 * prec * rec / (rec + prec));
+	}
+
+	public static <A> LogisticClassifier<A, String> makeClassifier(String name, GeneralDataset<A, String> train) {
+		LogisticClassifierFactory<A, String> factory = new LogisticClassifierFactory<>();
+		System.setErr(DEVNULL);
+		LogisticClassifier<A, String> classifier = factory.trainClassifier(train);
+		System.setErr(NORMERR);
+		RECOG.put(name, classifier);
+
+		return classifier;
 	}
 
 	public static <A> String runAblativeTest(GeneralDataset<A, String> trainFull,
@@ -131,14 +142,9 @@ class Main {
 		} else
 			LOG.m("Running full classifier...");
 
-		LogisticClassifierFactory<A, String> factory = new LogisticClassifierFactory<>();
-		System.setErr(DEVNULL);
-		LogisticClassifier<A, String> classifier = factory.trainClassifier(train);
-		System.setErr(NORMERR);
-
+		LogisticClassifier<A, String> classifier = makeClassifier(name, train);
 		LOG.m("... Trained");
 		LOG.m("Weights: " + Arrays.toString(classifier.getWeights()));
-		RECOG.put(name, classifier);
 
 		return name + " & " + stats(classifier, test);
 	}
