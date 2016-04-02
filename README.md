@@ -19,3 +19,6 @@ Google Collections:
 WordNet:
 * [WordNet for Windows](http://wordnetcode.princeton.edu/2.1/WordNet-2.1.exe)
 * [JWI](http://projects.csail.mit.edu/jwi/download.php?f=edu.mit.jwi_2.4.0_all.zip)
+
+Word Similarity:
+* [WS4J](https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/ws4j/ws4j-1.0.1.jar)
