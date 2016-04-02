@@ -2,7 +2,6 @@ package main;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -39,11 +38,14 @@ class Main {
 	 * Determines which features are selected for classification.
 	 */
 	public static int MODE = 1;
+
 	// to suppress classifier output.
+	public static final PrintStream NORMERR = System.out;
 	public static final PrintStream DEVNULL = new PrintStream(new OutputStream() {
 		public void write(int b) {}
 	});
-	public static final PrintStream NORMERR = System.out;
+
+	public static HashMap<String, Classifier<?, String>> RECOG = new HashMap<>();
 
 	/**
 	 * Creates a dataset for machine learning.
@@ -113,7 +115,7 @@ class Main {
 	}
 
 	public static <A> String runAblativeTest(GeneralDataset<A, String> trainFull,
-			GeneralDataset<A, String> testFull, String spec) {
+			GeneralDataset<A, String> testFull, String spec, String name) {
 
 		System.out.println();
 		GeneralDataset<A, String> train = trainFull, test = testFull;
@@ -136,8 +138,9 @@ class Main {
 
 		LOG.m("... Trained");
 		LOG.m("Weights: " + Arrays.toString(classifier.getWeights()));
+		RECOG.put(name, classifier);
 
-		return stats(classifier, test);
+		return name + " & " + stats(classifier, test);
 	}
 
 	public static HashMap<String, String> formAblations(Index<String> featureLabels) {
@@ -150,6 +153,7 @@ class Main {
 		ablations.put("Dist + Neg", "");
 		ablations.put("Dist", "");
 		ablations.put("Sub", "");
+
 		for (String metric : StringSimCalculator.NAMES)
 			ablations.put("Metric:" + metric, "");
 
@@ -188,7 +192,7 @@ class Main {
 		StringBuilder results = new StringBuilder();
 
 		for (Entry<String, String> test : formAblations(fv_train.featureIndex).entrySet())
-			results.append(test.getKey() + " & " + runAblativeTest(fv_train, fv_test, test.getValue()) + "\n");
+			results.append(runAblativeTest(fv_train, fv_test, test.getValue(), test.getKey()) + "\\\\\n");
 
 		System.out.println("\n\n" + results);
 
