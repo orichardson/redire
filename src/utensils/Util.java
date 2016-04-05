@@ -20,17 +20,18 @@ import edu.cmu.lti.ws4j.impl.Path;
 import edu.cmu.lti.ws4j.impl.Resnik;
 import edu.cmu.lti.ws4j.impl.WuPalmer;
 import edu.cmu.lti.ws4j.util.WS4JConfiguration;
-import edu.stanford.nlp.simple.*;
 import edu.stanford.nlp.ling.CoreAnnotations;
 import edu.stanford.nlp.ling.CoreAnnotations.LemmaAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.PartOfSpeechAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.TextAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.TokensAnnotation;
 import edu.stanford.nlp.ling.CoreLabel;
+import edu.stanford.nlp.ling.Word;
 import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.semgraph.SemanticGraph;
 import edu.stanford.nlp.semgraph.SemanticGraphCoreAnnotations;
+import edu.stanford.nlp.simple.Sentence;
 import edu.stanford.nlp.trees.TypedDependency;
 import framework.NormalizedTypedDependency;
 
@@ -62,14 +63,21 @@ public class Util {
 	}
 	
 	public static String lemmae(Sentence sent) {
-		for(TypedDependency td : dependency(sent))
+		Collection<TypedDependency> dependencies = dependency(sent);
+//		System.out.println(dependencies);
+		
+		for(TypedDependency td : dependencies)
 		{
-			System.out.println(td);
+//			System.out.println(td);
 			if(td.reln().toString().equals("root"))
 			{
-				System.out.println(td.reln().toString());
-				System.out.println(td.dep());
-				return td.dep().lemma();
+				
+//				System.out.println(td.reln().toString());
+//				System.out.println(td.dep().word());
+//				System.out.println(new Sentence(td.dep().word()).lemmas().get(0));
+//				
+//				System.out.println(td.dep().lemma());
+				return new Sentence(td.dep().word()).lemmas().get(0);
 			}
 				
 		}
@@ -88,16 +96,6 @@ public class Util {
 		return similarities;		
 	}
 
-	public static void main(String[] args)
-	{
-		String text = "Tom ran to the store to buy some milk";
-
-		Sentence s = new Sentence(text);
-		Collection<TypedDependency> td = dependency(s);
-
-		System.out.println(td);
-
-	}
 
 
 	public static Annotation annotate(String text)
