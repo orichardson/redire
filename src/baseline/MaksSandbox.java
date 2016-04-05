@@ -22,14 +22,7 @@ public class MaksSandbox {
 
 
 	public static void main(String[] args)
-	{
-		ArrayList<Pair> pairs = read();
-		
-		String word1 = "driving";
-		
-		String word2 = "driver";
-		
-		
+	{		
 		
 		String text = "Tom ran to the store to buy some milk";
 		String text1 = "Oliver doesn't believe in my code.";
@@ -39,41 +32,11 @@ public class MaksSandbox {
 		
 		System.out.println(Util.lemmae(s1));
 		System.out.println(Util.lemmae(s2));
+//		
+//		System.out.println("Hello world");
 		
 		Util.lemmatizedWS(new Sentence(text), new Sentence(text1));	
 		
-		
-		
-		
-//		WSUtils.computeAllWS(word1, word2);
-		
-
-		//Util.initialize(); 
-		//		String s1 = "Google bought YouTube";
-		//		String s2 = "YouTube was sold to Google";
-		//		Collection<TypedDependency> td1 = Util.getTypedDependency(s1);
-		//		Collection<TypedDependency> td2 = Util.getTypedDependency(s2);
-
-		//		for(Pair pair : pairs)
-		//		{
-		//			System.out.println("===============================================================================================");
-		//			System.out.println(pair.first);
-		//			System.out.println(Util.getTypedDependency(pair.first));
-		//			System.out.println("-----------------------------------------------------------------------------------------------");
-		//			System.out.println(pair.second);
-		//			System.out.println(Util.getTypedDependency(pair.second));
-		//		}
-
-//		Properties props;
-//		props = new Properties();
-//		props.put("annotators", "tokenize, ssplit, pos, lemma");
-//
-//		// StanfordCoreNLP loads a lot of models, so you probably
-//		// only want to do this once per execution
-//		pipeline = new StanfordCoreNLP(props);
-//		List<String> lem = lemmatize("I am running to the park.");
-//
-//		System.out.println(lem);
 
 	}
 
