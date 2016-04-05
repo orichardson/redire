@@ -1,6 +1,10 @@
 package utensils;
 
+import java.text.DecimalFormat;
+
 public class StopWatch {
+	private static DecimalFormat DF = new DecimalFormat("0.000");
+
 	long totalms;
 	long start;
 
@@ -27,6 +31,10 @@ public class StopWatch {
 
 	public double checkS() {
 		return check() / 1000d;
+	}
+
+	public String checkSF() {
+		return DF.format(checkS());
 	}
 
 }

@@ -1,5 +1,6 @@
 package baseline;
 
+import java.io.File;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.Arrays;
@@ -18,6 +19,7 @@ import edu.stanford.nlp.classify.LogisticClassifierFactory;
 import edu.stanford.nlp.classify.RVFDataset;
 import edu.stanford.nlp.ling.RVFDatum;
 import edu.stanford.nlp.stats.ClassicCounter;
+import edu.stanford.nlp.util.HashIndex;
 import edu.stanford.nlp.util.Index;
 import edu.stanford.nlp.util.Pair;
 import framework.MSR;
@@ -57,10 +59,21 @@ class Main {
 
 		RVFDataset<Integer, String> ds = new RVFDataset<>();
 		int count = 0;
-		for (ParaExample ex : examples){
+		for (ParaExample ex : examples) {
 			ds.add(new RVFDatum<>(Features.computeFullFeatureVector(ex.first(), ex.second(), mode),
 					ex.isPara() ? 1 : -1));
-			System.out.println(count++);
+
+			if (count++ % 10 == 0) {
+				System.out.print("\n" + count + "\tToken: " + Features.tokenTime.checkSF());
+				System.out.print("\tAnnot: " + Features.annoTime.checkSF());
+				System.out.print("\twordnet: " + Features.wnTime.checkSF());
+				System.out.print("\tSoundex: " + Features.soundexTime.checkSF());
+				System.out.print("\n\tdist: " + Features.distTime.checkSF());
+				System.out.print("\tPOS: " + Features.posTime.checkSF());
+				System.out.print("\tDEP: " + Features.depTime.checkSF());
+				System.out.print("\tmask: " + Features.maskTime.checkSF());
+				System.out.print("\tstem: " + Features.stemTime.checkSF());
+			}
 		}
 		return ds;
 	}
@@ -178,37 +191,70 @@ class Main {
 
 	}
 
+	public static boolean LOAD = true;
+
 	public static void main(String[] args) throws Exception {
-		//Util.initialize();
-		Util.wordnet();
+		RVFDataset<Integer, String> fv_train, fv_test;
 
-		// The MSR training file and test file	
-		String training_file = "data/msr/msr_paraphrase_train.txt";
-		String testing_file = "data/msr/msr_paraphrase_test.txt";
+		if (LOAD) {
+//			fv_train = new RVFDataset<>(); fv_test = new RVFDataset<>();
+//			fv_train.readSVMLightFormat(new File("./out/train_lightsvm.txt"));
+//			fv_train.readSVMLightFormat(new File("./out/test_lightsvm.txt"));
 
-		List<MSR> trainMSR = MSR.read(training_file), testMSR = MSR.read(testing_file);
-		LOG.m("Data Loaded.");
+			RVFDataset<String, String> loaded = RVFDataset.readSVMLightFormat("./out/train_lightsvm.txt");
+			Index<Integer> hi = new HashIndex<>(Arrays.asList(1, -1));
+			Index<String> fi = HashIndex.loadFromFilename("./out/feature_index.txt");
 
-		// actual classifier
-		LOG.m("Making Full Feature Vectors...");
-		System.setErr(DEVNULL);
-		RVFDataset<Integer, String> fv_train = makeFeatureData(trainMSR, MODE),
-				fv_test = makeFeatureData(testMSR, MODE);
-		System.setErr(NORMERR);
-		LOG.m("...done");
+			fv_train = new RVFDataset<Integer, String>(hi, loaded.getLabelsArray(), fi,
+					loaded.getDataArray(), loaded.getValuesArray());
+
+			loaded = RVFDataset.readSVMLightFormat("./out/test_lightsvm.txt");
+			fv_test = new RVFDataset<Integer, String>(hi, loaded.getLabelsArray(), fi,
+					loaded.getDataArray(), loaded.getValuesArray());
+
+			LOG.m("loaded both files.");
+
+		} else {
+			//Util.initialize();
+			Util.wordnet();
+
+			// The MSR training file and test file	
+			String training_file = "data/msr/msr_paraphrase_train.txt";
+			String testing_file = "data/msr/msr_paraphrase_test.txt";
+
+			List<MSR> trainMSR = MSR.read(training_file), testMSR = MSR.read(testing_file);
+			LOG.m("Data Loaded.");
+			Util.initialize();
+			// actual classifier
+			LOG.m("Making Full Feature Vectors...");
+
+//		System.setErr(DEVNULL);
+			fv_train = makeFeatureData(trainMSR, MODE);
+			fv_test = makeFeatureData(testMSR, MODE);
+//		System.setErr(NORMERR);
+			LOG.m("writing vectors to files...");
+
+			fv_train.writeSVMLightFormat(new File("./out/train_lightsvm.txt"));
+			fv_train.featureIndex().saveToFilename("./out/feature_index.txt");
+			fv_train.labelIndex().saveToFilename("./out/label_index.txt");
+			fv_train.writeSVMLightFormat(new File("./out/test_lightsvm.txt"));
+			LOG.m("...done");
+		}
+		
+		Set<String> s = new HashSet<String>(fv_train.featureIndex.objectsList());
+		System.out.println(s);
+		System.out.println(s.remove("lesk"));
+		System.out.println(s.remove("Dist0|0"));
+		fv_train.retainFeatures(s);
+		
+		System.out.println(fv_train.numFeatures());
 
 		StringBuilder results = new StringBuilder();
 
-//		for (Entry<String, String> test : formAblations(fv_train.featureIndex).entrySet())
-			//results.append(runAblativeTest(fv_train, fv_test, test.getValue(), test.getKey()) + "\\\\\n");
-		
-		System.out.println(runAblativeTest(fv_train, fv_test, null, "Full"));
+		for (Entry<String, String> test : formAblations(fv_train.featureIndex).entrySet())
+			results.append(runAblativeTest(fv_train, fv_test, test.getValue(), test.getKey()) + "\\\\\n");
 
-//		System.out.println("\n\n" + results);
 
-//		System.out.println("\n\nToken: " + Features.tokenTime.checkS());
-//		System.out.println("Stem: " + Features.stemTime.checkS());
-//		System.out.println("Soundex: " + Features.soundexTime.checkS());
-//		System.out.println("POS: " + Features.posTime.checkS());
+		System.out.println("\n\n" + results);
 	}
 }

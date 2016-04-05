@@ -2,28 +2,18 @@ package baseline;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import utensils.Soundex;
-import utensils.StopWatch;
-import utensils.Util;
-import edu.cmu.lti.ws4j.impl.HirstStOnge;
-import edu.cmu.lti.ws4j.impl.JiangConrath;
-import edu.cmu.lti.ws4j.impl.LeacockChodorow;
-import edu.cmu.lti.ws4j.impl.Lesk;
-import edu.cmu.lti.ws4j.impl.Lin;
-import edu.cmu.lti.ws4j.impl.Path;
-import edu.cmu.lti.ws4j.impl.Resnik;
-import edu.cmu.lti.ws4j.impl.WuPalmer;
 import edu.stanford.nlp.pipeline.Annotation;
-import edu.stanford.nlp.simple.Sentence;
 import edu.stanford.nlp.stats.ClassicCounter;
 import edu.stanford.nlp.stats.Counter;
 import framework.NormalizedTypedDependency;
 import framework.StringSimCalculator;
+import utensils.Soundex;
+import utensils.StopWatch;
+import utensils.Util;
 
 /**
  * 
@@ -33,6 +23,8 @@ import framework.StringSimCalculator;
  *
  */
 public class Features {
+
+	public static Pattern NEGATE = Pattern.compile("(.*(n't)($|\\s))|([N|n]ot)");
 
 	/**
 	 * Computes the transformations of a string for the two sentences, s1 and s2.<br/>
@@ -57,30 +49,34 @@ public class Features {
 	public static StopWatch tokenTime = new StopWatch(),
 			stemTime = new StopWatch(),
 			soundexTime = new StopWatch(),
-			posTime = new StopWatch();
+			posTime = new StopWatch(),
+			distTime = new StopWatch(),
+			annoTime = new StopWatch(),
+			maskTime = new StopWatch(),
+			depTime = new StopWatch(),
+			wnTime = new StopWatch();
 
-	public static List<String> generateFeatures(String str) {
+	public static List<String> generateFeatures(Annotation annotation) {
 		List<String> features = new ArrayList<>(10);
 
 		// Original tokens with order maintained
-		tokenTime.go();
 		//Annotation annotation = Util.annotate(str);
-		Sentence annotation = new Sentence(str);
-		
-		List<String> tokens = Util.tokenize(annotation);
+
+		tokenTime.go();
+		List<String> tokens = Util.tokenizePIPE(annotation);
 		features.add(String.join(" ", tokens));
 		tokenTime.stop();
 
 		// Tokens replaced by their stems.
 		stemTime.go();
-		List<String> stemmed = Util.lemma(annotation);
+		List<String> stemmed = Util.lemmaPIPE(annotation);
 		features.add(String.join(" ", stemmed));
 		stemTime.stop();
 
 		// Tokens replaced by their POS tags.
 		posTime.go();
 //		List<String> postags = Collections.nCopies(tokens.size(), "POSTAG");//Util.tagPOS(tokens);
-		List<String> postags = Util.tagPos(annotation);
+		List<String> postags = Util.tagPosPIPE(annotation);
 		features.add(String.join(" ", postags));
 		posTime.stop();
 
@@ -90,6 +86,7 @@ public class Features {
 		features.add(String.join(" ", soundex));
 		soundexTime.stop();
 
+		maskTime.go();
 		// Positions of verbs and nouns in both sentences
 		ArrayList<Integer> nounsi = new ArrayList<Integer>();
 		ArrayList<Integer> verbsi = new ArrayList<Integer>();
@@ -111,8 +108,7 @@ public class Features {
 		features.add(String.join(" ", maskIndices(tokens, verbsi)));
 		features.add(String.join(" ", maskIndices(stemmed, verbsi)));
 		features.add(String.join(" ", maskIndices(soundex, verbsi)));
-		
-
+		maskTime.stop();
 
 		return features;
 	}
@@ -221,19 +217,24 @@ public class Features {
 	 */
 	public static Counter<String> computeFullFeatureVector(String s1, String s2, int mode) {
 		// Generates all the string for which we compute metrics.
-		List<String> trans1 = generateFeatures(s1), trans2 = generateFeatures(s2);
+		annoTime.go();
+		Annotation a1 = Util.annotate(s1), a2 = Util.annotate(s2);
+		annoTime.stop();
+
+		List<String> trans1 = generateFeatures(a1), trans2 = generateFeatures(a2);
 		int N = trans1.size();
 
 		// create the return vector; the number is a guess of the required length
-		ClassicCounter<String> vector = new ClassicCounter<>(133);
+		ClassicCounter<String> vector = new ClassicCounter<>(134);
 
+		distTime.go();
 		// Compute the distances for each pair of transformed sentences.
 		for (int i = 0; i < N; i++) {
 			double[] dists = StringSimCalculator.computeAll(trans1.get(i), trans2.get(i));
 			for (int j = 0; j < dists.length; j++)
 				vector.incrementCount("Dist" + i + "|" + j, dists[j]);
-
 		}
+
 		// For the first 4 transformations, find the subset that maximizes the
 		// similarity. Compute these values and store it.
 		for (int i = 0; i < 4; i++) {
@@ -261,16 +262,17 @@ public class Features {
 				tot += distances[j];
 				vector.incrementCount("Sub" + i + "|" + j, distances[j]);
 			}
-			vector.incrementCount("Sub" + i+"~AVG", (tot / distances.length));
+			vector.incrementCount("Sub" + i + "~AVG", (tot / distances.length));
 		}
+		distTime.stop();
+
 		// Regular expression to search for negation in a sentence.
-		Pattern negate = Pattern.compile("(.*(n't)($|\\s))|([N|n]ot)");
 		// looks for instances of n't and for Not.
 
 		// Negation in S1
-		vector.incrementCount("NegFirst", negate.matcher(s1).find() ? 1d : 0d);
+		vector.incrementCount("NegFirst", NEGATE.matcher(s1).find() ? 1d : 0d);
 		// Negation in S2
-		vector.incrementCount("NegLast", negate.matcher(s2).find() ? 1d : 0d);
+		vector.incrementCount("NegLast", NEGATE.matcher(s2).find() ? 1d : 0d);
 
 		// ratio = min(|S1|,|S2|)/max(|S1|,|S2|)
 		double t1len = trans1.get(0).length(), t2len = trans2.get(0).length();
@@ -281,13 +283,15 @@ public class Features {
 		}
 
 		if (mode == 3) {
-			HashSet<NormalizedTypedDependency> dep1 = Util.getDependencySet(new Sentence(s1)),
-					dep2 = Util.getDependencySet(new Sentence(s2));
+			depTime.go();
+			HashSet<NormalizedTypedDependency> dep1 = Util.getDependencySetPIPE(a1),
+					dep2 = Util.getDependencySetPIPE(a2);
 
 			double dep1size = dep1.size();
 			double dep2size = dep2.size();
 
 			dep1.addAll(dep2);
+			depTime.stop();
 
 			double common = dep1.size();
 
@@ -299,15 +303,17 @@ public class Features {
 			vector.incrementCount("DepR2", R2);
 			vector.incrementCount("DepFR", FR);
 		}
-		
-		ArrayList<Double> wordnet = Util.lemmatizedWS(new Sentence(s1), new Sentence(s2));		
-		String[] wordnet_sim_names = {"hirst", "leacock", "lesk", "wupalmer", "resnik", "jiang", "lin", "path"};
 
-		for(int i = 0; i < wordnet.size(); i++)
-		{
-			vector.incrementCount(wordnet_sim_names[i], wordnet.get(i));
+		wnTime.go();
+		//"leacock", "lesk", "wupalmer", "resnik", "jiang", "lin", "path"
+		String[] toCompute = new String[] { "lesk"};
+		ArrayList<Double> wordnet = Util.lemmatizedWSPIPE(a1, a2, toCompute);
+
+		for (int i = 0; i < wordnet.size(); i++) {
+			vector.incrementCount(toCompute[i], wordnet.get(i));
 		}
-		
+		wnTime.stop();
+
 		return vector;
 	}
 }

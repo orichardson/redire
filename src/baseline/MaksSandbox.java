@@ -27,8 +27,8 @@ public class MaksSandbox {
 		Sentence s1 = new Sentence(text),
 				s2 = new Sentence(text1);
 
-		System.out.println(Util.lemmae(s1));
-		System.out.println(Util.lemmae(s2));
+		System.out.println(Util.rootLem(s1));
+		System.out.println(Util.rootLem(s2));
 //		
 //		System.out.println("Hello world");
 
