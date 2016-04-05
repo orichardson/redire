@@ -25,7 +25,7 @@ public class WNUtils {
 
 	public static void main(String[] args) throws IOException {
 		 // look up first sense of the word "dog"
-		IIndexWord idxWord = DICT.getIndexWord("dispatched", POS.VERB);
+		IIndexWord idxWord = DICT.getIndexWord("dispatch", POS.VERB);
 		
 		IWordID wordID = idxWord.getWordIDs().get(0);
 		IWord word = DICT.getWord(wordID);

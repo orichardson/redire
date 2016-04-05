@@ -7,13 +7,23 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import utensils.Soundex;
+import utensils.StopWatch;
+import utensils.Util;
+import edu.cmu.lti.ws4j.impl.HirstStOnge;
+import edu.cmu.lti.ws4j.impl.JiangConrath;
+import edu.cmu.lti.ws4j.impl.LeacockChodorow;
+import edu.cmu.lti.ws4j.impl.Lesk;
+import edu.cmu.lti.ws4j.impl.Lin;
+import edu.cmu.lti.ws4j.impl.Path;
+import edu.cmu.lti.ws4j.impl.Resnik;
+import edu.cmu.lti.ws4j.impl.WuPalmer;
+import edu.stanford.nlp.pipeline.Annotation;
+import edu.stanford.nlp.simple.Sentence;
 import edu.stanford.nlp.stats.ClassicCounter;
 import edu.stanford.nlp.stats.Counter;
 import framework.NormalizedTypedDependency;
 import framework.StringSimCalculator;
-import utensils.Soundex;
-import utensils.StopWatch;
-import utensils.Util;
 
 /**
  * 
@@ -54,19 +64,23 @@ public class Features {
 
 		// Original tokens with order maintained
 		tokenTime.go();
-		List<String> tokens = Util.tokenize(str);
+		//Annotation annotation = Util.annotate(str);
+		Sentence annotation = new Sentence(str);
+		
+		List<String> tokens = Util.tokenize(annotation);
 		features.add(String.join(" ", tokens));
 		tokenTime.stop();
 
 		// Tokens replaced by their stems.
 		stemTime.go();
-		List<String> stemmed = Util.stemSentence(tokens);
+		List<String> stemmed = Util.lemma(annotation);
 		features.add(String.join(" ", stemmed));
 		stemTime.stop();
 
 		// Tokens replaced by their POS tags.
 		posTime.go();
-		List<String> postags = Collections.nCopies(tokens.size(), "POSTAG");//Util.tagPOS(tokens);
+//		List<String> postags = Collections.nCopies(tokens.size(), "POSTAG");//Util.tagPOS(tokens);
+		List<String> postags = Util.tagPos(annotation);
 		features.add(String.join(" ", postags));
 		posTime.stop();
 
@@ -97,6 +111,8 @@ public class Features {
 		features.add(String.join(" ", maskIndices(tokens, verbsi)));
 		features.add(String.join(" ", maskIndices(stemmed, verbsi)));
 		features.add(String.join(" ", maskIndices(soundex, verbsi)));
+		
+
 
 		return features;
 	}
@@ -265,8 +281,8 @@ public class Features {
 		}
 
 		if (mode == 3) {
-			HashSet<NormalizedTypedDependency> dep1 = Util.getDependencySet(s1),
-					dep2 = Util.getDependencySet(s2);
+			HashSet<NormalizedTypedDependency> dep1 = Util.getDependencySet(new Sentence(s1)),
+					dep2 = Util.getDependencySet(new Sentence(s2));
 
 			double dep1size = dep1.size();
 			double dep2size = dep2.size();
@@ -283,7 +299,15 @@ public class Features {
 			vector.incrementCount("DepR2", R2);
 			vector.incrementCount("DepFR", FR);
 		}
+		
+		ArrayList<Double> wordnet = Util.lemmatizedWS(new Sentence(s1), new Sentence(s2));		
+		String[] wordnet_sim_names = {"hirst", "leacock", "lesk", "wupalmer", "resnik", "jiang", "lin", "path"};
 
+		for(int i = 0; i < wordnet.size(); i++)
+		{
+			vector.incrementCount(wordnet_sim_names[i], wordnet.get(i));
+		}
+		
 		return vector;
 	}
 }

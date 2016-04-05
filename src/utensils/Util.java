@@ -1,24 +1,37 @@
 package utensils;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.StringReader;
+
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Properties;
 
+import edu.cmu.lti.lexical_db.ILexicalDatabase;
+import edu.cmu.lti.lexical_db.NictWordNet;
+import edu.cmu.lti.ws4j.RelatednessCalculator;
+import edu.cmu.lti.ws4j.impl.HirstStOnge;
+import edu.cmu.lti.ws4j.impl.JiangConrath;
+import edu.cmu.lti.ws4j.impl.LeacockChodorow;
+import edu.cmu.lti.ws4j.impl.Lesk;
+import edu.cmu.lti.ws4j.impl.Lin;
+import edu.cmu.lti.ws4j.impl.Path;
+import edu.cmu.lti.ws4j.impl.Resnik;
+import edu.cmu.lti.ws4j.impl.WuPalmer;
+import edu.cmu.lti.ws4j.util.WS4JConfiguration;
+import edu.stanford.nlp.simple.*;
+import edu.stanford.nlp.ling.CoreAnnotations;
+import edu.stanford.nlp.ling.CoreAnnotations.LemmaAnnotation;
+import edu.stanford.nlp.ling.CoreAnnotations.PartOfSpeechAnnotation;
+import edu.stanford.nlp.ling.CoreAnnotations.TextAnnotation;
+import edu.stanford.nlp.ling.CoreAnnotations.TokensAnnotation;
 import edu.stanford.nlp.ling.CoreLabel;
-import edu.stanford.nlp.ling.TaggedWord;
-import edu.stanford.nlp.ling.Word;
-import edu.stanford.nlp.parser.nndep.DependencyParser;
-import edu.stanford.nlp.process.CoreLabelTokenFactory;
-import edu.stanford.nlp.process.PTBTokenizer;
-import edu.stanford.nlp.tagger.maxent.MaxentTagger;
-import edu.stanford.nlp.trees.GrammaticalStructure;
+import edu.stanford.nlp.pipeline.Annotation;
+import edu.stanford.nlp.pipeline.StanfordCoreNLP;
+import edu.stanford.nlp.semgraph.SemanticGraph;
+import edu.stanford.nlp.semgraph.SemanticGraphCoreAnnotations;
 import edu.stanford.nlp.trees.TypedDependency;
-import framework.MSR;
 import framework.NormalizedTypedDependency;
 
 /**
@@ -28,36 +41,130 @@ import framework.NormalizedTypedDependency;
  */
 public class Util {
 
-	private static MaxentTagger tagger;
-	private static Stemmer stemmer;
-	private static DependencyParser parser;
+	private static StanfordCoreNLP pipeline;
 
-	/**
-	 * Initialize any objects/models we need. This is due to the fact that a model takes a long time to initialize and
-	 * if not done so, will create a bottleneck.
-	 */
-	public static void initialize() {
-		tagger = new MaxentTagger("lib/stanford-postagger/models/english-bidirectional-distsim.tagger");
-		stemmer = new Stemmer();
-		parser = DependencyParser.loadFromModelFile(DependencyParser.DEFAULT_MODEL);
-	}
-
-	public static Collection<TypedDependency> getTypedDependency(String sentence)
+	public static void initialize()
 	{
-		List<TaggedWord> tagged = tagger.tagSentence(createWordList(sentence));
-		GrammaticalStructure gs = parser.predict(tagged);
-		Collection<TypedDependency> tds = gs.allTypedDependencies();
-		
-		return tds;
+		Properties props = new Properties();
+		props.setProperty("annotators", "tokenize, ssplit, pos, lemma, parse, depparse");
+		pipeline = new StanfordCoreNLP(props);
+	}
+	private static ILexicalDatabase db = new NictWordNet();
+
+	private static RelatednessCalculator[] WSMetric = {
+		new HirstStOnge(db), new LeacockChodorow(db), new Lesk(db),  new WuPalmer(db), 
+		new Resnik(db), new JiangConrath(db), new Lin(db), new Path(db)
+	};
+	
+	public static void wordnet()
+	{
+		WS4JConfiguration.getInstance().setMFS(true);
 	}
 	
-	public static HashSet<NormalizedTypedDependency> getDependencySet(String sentence) {
-		List<TaggedWord> tagged = tagger.tagSentence(createWordList(sentence));
-		GrammaticalStructure gs = parser.predict(tagged);
-		Collection<TypedDependency> tds = gs.allTypedDependencies();
-		HashSet<NormalizedTypedDependency> tdset = new HashSet<NormalizedTypedDependency>();
+	public static String lemmae(Sentence sent) {
+		for(TypedDependency td : dependency(sent))
+		{
+			System.out.println(td);
+			if(td.reln().toString().equals("root"))
+			{
+				System.out.println(td.reln().toString());
+				System.out.println(td.dep());
+				return td.dep().lemma();
+			}
+				
+		}
 
-		for (TypedDependency td : tds) {
+		
+		return "";
+	}
+	
+	public static ArrayList<Double> lemmatizedWS(Sentence sentence1, Sentence sentence2)
+	{		
+		ArrayList<Double> similarities = new ArrayList<Double>();
+		
+		for(RelatednessCalculator rc : WSMetric)
+			similarities.add(rc.calcRelatednessOfWords(lemmae(sentence1), lemmae(sentence2)));
+		
+		return similarities;		
+	}
+
+	public static void main(String[] args)
+	{
+		String text = "Tom ran to the store to buy some milk";
+
+		Sentence s = new Sentence(text);
+		Collection<TypedDependency> td = dependency(s);
+
+		System.out.println(td);
+
+	}
+
+
+	public static Annotation annotate(String text)
+	{
+		Annotation document = new Annotation(text);
+		pipeline.annotate(document);
+
+		return document;
+	}
+
+	public static List<String> tokenize(Sentence s)
+	{
+		return s.words();
+	}
+
+	public static List<String> tokenizeSlow(Annotation annotation)
+	{
+		List<String> tokens = new ArrayList<String>();
+		for(CoreLabel token : annotation.get(TokensAnnotation.class))
+		{
+			tokens.add(token.get(TextAnnotation.class));
+		}
+		return tokens;		
+	} 
+
+	public static List<String> tagPos(Sentence s)
+	{
+		return s.posTags();
+	}
+
+
+	public static List<String> tagPosSlow(Annotation annotation){
+		List<String> pos = new ArrayList<String>();
+		for(CoreLabel core : annotation.get(TokensAnnotation.class))
+			pos.add(core.get(PartOfSpeechAnnotation.class));		
+		return pos;	
+	}
+
+	public static List<String> lemma(Sentence s)
+	{
+		return s.lemmas();
+	}
+
+	public static List<String> lemmaSlow(Annotation annotation)
+	{
+		List<String> lemmas = new ArrayList<String>();		
+		for(CoreLabel core : annotation.get(TokensAnnotation.class))
+			lemmas.add(core.get(LemmaAnnotation.class));
+
+		return lemmas;
+	}
+
+	public static Collection<TypedDependency> dependency(Sentence s)
+	{
+		return s.dependencyGraph().typedDependencies();
+	}
+
+	public static Collection<TypedDependency> dependencySlow(Annotation annotation)
+	{
+		SemanticGraph sg = annotation.get(CoreAnnotations.SentencesAnnotation.class).get(0).get(SemanticGraphCoreAnnotations.BasicDependenciesAnnotation.class);
+		return sg.typedDependencies();
+	}
+
+
+	public static HashSet<NormalizedTypedDependency> getDependencySet(Sentence annotation) {
+		HashSet<NormalizedTypedDependency> tdset = new HashSet<NormalizedTypedDependency>();
+		for (TypedDependency td : dependency(annotation)) {
 			NormalizedTypedDependency ntd = new NormalizedTypedDependency(td.reln().toString(), td.gov().toString(),
 					td.dep().toString());
 			tdset.add(ntd);
@@ -67,103 +174,5 @@ public class Util {
 
 	}
 
-	/**
-	 * God this method is awful. WHy make so many objects just to throw them away?
-	 * 
-	 * Takes a String sentence and tokenizes it.
-	 * 
-	 * @param sentence
-	 *            - The sentence to tokenize
-	 * @return - String array of the tokens.
-	 */
-	public static List<String> tokenize(String sentence) {
-		PTBTokenizer<CoreLabel> ptb = new PTBTokenizer<CoreLabel>(new StringReader(sentence),
-				new CoreLabelTokenFactory(), "");
-
-		ArrayList<String> ret = new ArrayList<String>();
-		for (CoreLabel label; ptb.hasNext();) {
-			label = (CoreLabel) ptb.next();
-
-			ret.add(label.toString());
-		}
-		return ret;
-	}
-
-	/**
-	 * Creates a list of Word objects.
-	 * 
-	 * @param sentence
-	 * @return
-	 */
-	public static List<Word> createWordList(String sentence) {
-		return createWordList(tokenize(sentence));
-	}
-
-	/**
-	 * Creates a list of Word objects.
-	 * 
-	 * @param tokens
-	 * @return
-	 */
-	public static List<Word> createWordList(List<String> tokens) {
-		List<Word> words = new ArrayList<Word>();
-		for (String token : tokens)
-			words.add(new Word(token));
-
-		return words;
-	}
-
-	/**
-	 * Returns an array of all the POS tags. The position of the POS tag matches the position of a word in the tokenized
-	 * sentence array.
-	 */
-	public static List<String> tagPOS(String sentence) {
-		List<TaggedWord> tagged = tagger.tagSentence(createWordList(sentence));
-
-		return getTags(tagged);
-	}
-
-	/**
-	 * Returns an array of all the POS tags. The position of the POS tag matches the position of a word in the tokenized
-	 * sentence array.
-	 */
-	public static List<String> tagPOS(List<String> tokens) {
-		List<TaggedWord> tagged = tagger.tagSentence(createWordList(tokens));
-
-		return getTags(tagged);
-	}
-
-	/**
-	 * Returns an array of all the POS tags. The position of the POS tag matches the position of a word in the tokenized
-	 * sentence array.
-	 */
-	public static List<String> getTags(List<TaggedWord> tagged) {
-		List<String> ret = new ArrayList<>();
-
-		for (TaggedWord w : tagged)
-			ret.add(w.tag());
-
-		return ret;
-	}
-
-	/**
-	 * Stems a sentence, returning an array of the stems. The position of the stem matches the position of a word in the
-	 * tokenized sentence array.
-	 */
-	public static List<String> stemSentence(String sentence) {
-		return stemSentence(Util.tokenize(sentence));
-	}
-
-	/**
-	 * Stems a sentence, returning an array of the stems. The position of the stem matches the position of a word in the
-	 * tokenized sentence array.
-	 */
-	public static List<String> stemSentence(List<String> tokens) {
-		List<String> ret = new ArrayList<>();
-		for (String token : tokens)
-			ret.add(stemmer.stem(token));
-		
-		return ret;
-	}
 
 }

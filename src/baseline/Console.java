@@ -12,7 +12,7 @@ import utensils.Util;
 public class Console {
 
 	public static void main(String[] args) {
-		Util.initialize();
+		//Util.initialize();
 
 		String training_file = "data/msr/msr_paraphrase_train.txt";
 
@@ -40,7 +40,7 @@ public class Console {
 			if (n > 0)
 				System.out.println(n + "\t" + score + "\tPARAPHASES!");
 			else
-				System.err.println(n + "\t" + score + "\tFUCK YOU");
+				System.err.println(n + "\t" + score + "\tNOT A PARAPHRASE!");
 
 		}
 		scan.close();

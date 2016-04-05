@@ -56,10 +56,12 @@ class Main {
 	public static RVFDataset<Integer, String> makeFeatureData(Collection<? extends ParaExample> examples, int mode) {
 
 		RVFDataset<Integer, String> ds = new RVFDataset<>();
-		for (ParaExample ex : examples)
+		int count = 0;
+		for (ParaExample ex : examples){
 			ds.add(new RVFDatum<>(Features.computeFullFeatureVector(ex.first(), ex.second(), mode),
 					ex.isPara() ? 1 : -1));
-
+			System.out.println(count++);
+		}
 		return ds;
 	}
 
@@ -116,9 +118,9 @@ class Main {
 
 	public static <A> LogisticClassifier<A, String> makeClassifier(String name, GeneralDataset<A, String> train) {
 		LogisticClassifierFactory<A, String> factory = new LogisticClassifierFactory<>();
-		System.setErr(DEVNULL);
+		//System.setErr(DEVNULL);
 		LogisticClassifier<A, String> classifier = factory.trainClassifier(train);
-		System.setErr(NORMERR);
+		//System.setErr(NORMERR);
 		RECOG.put(name, classifier);
 
 		return classifier;
@@ -177,7 +179,8 @@ class Main {
 	}
 
 	public static void main(String[] args) throws Exception {
-		Util.initialize();
+		//Util.initialize();
+		Util.wordnet();
 
 		// The MSR training file and test file	
 		String training_file = "data/msr/msr_paraphrase_train.txt";
@@ -196,10 +199,12 @@ class Main {
 
 		StringBuilder results = new StringBuilder();
 
-		for (Entry<String, String> test : formAblations(fv_train.featureIndex).entrySet())
-			results.append(runAblativeTest(fv_train, fv_test, test.getValue(), test.getKey()) + "\\\\\n");
+//		for (Entry<String, String> test : formAblations(fv_train.featureIndex).entrySet())
+			//results.append(runAblativeTest(fv_train, fv_test, test.getValue(), test.getKey()) + "\\\\\n");
+		
+		System.out.println(runAblativeTest(fv_train, fv_test, null, "Full"));
 
-		System.out.println("\n\n" + results);
+//		System.out.println("\n\n" + results);
 
 //		System.out.println("\n\nToken: " + Features.tokenTime.checkS());
 //		System.out.println("Stem: " + Features.stemTime.checkS());
