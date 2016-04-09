@@ -225,7 +225,7 @@ public class Features {
 		int N = trans1.size();
 
 		// create the return vector; the number is a guess of the required length
-		ClassicCounter<String> vector = new ClassicCounter<>(134);
+		ClassicCounter<String> vector = new ClassicCounter<>();
 
 		distTime.go();
 		// Compute the distances for each pair of transformed sentences.
@@ -305,12 +305,12 @@ public class Features {
 		}
 
 		wnTime.go();
-		//"leacock", "lesk", "wupalmer", "resnik", "jiang", "lin", "path"
-		String[] toCompute = new String[] { "lesk"};
+		//
+		String[] toCompute = new String[] { "lesk", "leacock", "lesk", "wupalmer", "resnik", "jiang", "lin", "path" };
 		ArrayList<Double> wordnet = Util.lemmatizedWSPIPE(a1, a2, toCompute);
 
 		for (int i = 0; i < wordnet.size(); i++) {
-			vector.incrementCount(toCompute[i], wordnet.get(i));
+			vector.incrementCount(toCompute[i], Math.exp(-wordnet.get(i)));
 		}
 		wnTime.stop();
 

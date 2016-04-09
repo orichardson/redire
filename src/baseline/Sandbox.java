@@ -10,6 +10,8 @@ import edu.stanford.nlp.classify.RVFDataset;
 import edu.stanford.nlp.ling.RVFDatum;
 import edu.stanford.nlp.stats.ClassicCounter;
 import edu.stanford.nlp.stats.Counter;
+import edu.stanford.nlp.util.HashIndex;
+import edu.stanford.nlp.util.Index;
 
 public class Sandbox {
 
@@ -21,21 +23,31 @@ public class Sandbox {
 //
 //		Annotation a = Util.annotate(text);
 //		System.out.println(Util.rootLemPIPE(a));
-		RVFDataset<Integer,String> x = makeRandomData(150);
+		RVFDataset<Integer, String> x = makeRandomData(150);
 		x.writeSVMLightFormat(new File("./out/RANDOM.txt"));
-		x.summaryStatistics();
+		x.featureIndex().saveToFilename("./out/RANDOM_F_index.txt");
+
+		RVFDataset<String, String> loaded = RVFDataset.readSVMLightFormat("./out/RANDOM.txt");
+		Index<Integer> hi = new HashIndex<>(Arrays.asList(1, -1));
+		Index<String> fi = HashIndex.loadFromFilename("./out/RANDOM_F_index.txt");
+
+		RVFDataset<Integer, String> y = new RVFDataset<Integer, String>(hi,
+				loaded.getLabelsArray(), fi,
+				loaded.getDataArray(), loaded.getValuesArray());
+
+		y.summaryStatistics();
 		LogisticClassifierFactory<Integer, String> factory = new LogisticClassifierFactory<>();
 		//System.setErr(DEVNULL);
-		LogisticClassifier<Integer, String> classifier = factory.trainClassifier(x);
+		LogisticClassifier<Integer, String> classifier = factory.trainClassifier(y);
 
 	}
 
 	public static RVFDataset<Integer, String> makeRandomData(int nfeat) {
 		RVFDataset<Integer, String> data = new RVFDataset<>();
 		for (int l = 0; l < 2000; l++) {
-			Counter<String> thing = new ClassicCounter<String>();
+			Counter<String> thing = new ClassicCounter<String>(134);
 			for (int i = 0; i < nfeat; i++)
-				thing.incrementCount("Thing" + i, Math.random());
+				thing.incrementCount("Thing~|" + i, Math.random());
 
 			data.add(new RVFDatum<Integer, String>(thing, Math.random() > 0.5 ? 1 : -1));
 		}

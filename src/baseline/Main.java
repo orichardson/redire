@@ -167,7 +167,7 @@ class Main {
 		// form descriptions of all ablations
 		HashMap<String, String> ablations = new LinkedHashMap<>();
 
-		ablations.put("Dist + Sub + Neg + Ratio + Dep", null);
+		ablations.put("FULL", null);
 		ablations.put("Dist + Sub + Neg + Ratio", "");
 		ablations.put("Sub + Neg + Ratio + Dep", "");
 		ablations.put("Dist + Neg", "");
@@ -208,9 +208,9 @@ class Main {
 			fv_train = new RVFDataset<Integer, String>(hi, loaded.getLabelsArray(), fi,
 					loaded.getDataArray(), loaded.getValuesArray());
 
-			loaded = RVFDataset.readSVMLightFormat("./out/test_lightsvm.txt");
-			fv_test = new RVFDataset<Integer, String>(hi, loaded.getLabelsArray(), fi,
-					loaded.getDataArray(), loaded.getValuesArray());
+			RVFDataset<String, String> loaded2 = RVFDataset.readSVMLightFormat("./out/test_lightsvm.txt");
+			fv_test = new RVFDataset<Integer, String>(hi, loaded2.getLabelsArray(), fi,
+					loaded2.getDataArray(), loaded2.getValuesArray());
 
 			LOG.m("loaded both files.");
 
@@ -244,12 +244,9 @@ class Main {
 		Set<String> s = new HashSet<String>(fv_train.featureIndex.objectsList());
 		System.out.println(s);
 //		System.out.println(s.remove("Dist0|1"));
-		fv_train.retainFeatures(s);
-		fv_train.featureIndex.add("FAKE");
-		fv_train.featureIndex.add("FAKE2");
+//		fv_train.retainFeatures(s);
 
 		System.out.println(fv_train.featureIndex.size());
-		Thread.sleep(3000);
 		
 		StringBuilder results = new StringBuilder();
 
