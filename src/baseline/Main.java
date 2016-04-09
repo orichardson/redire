@@ -243,12 +243,10 @@ class Main {
 		
 		Set<String> s = new HashSet<String>(fv_train.featureIndex.objectsList());
 		System.out.println(s);
-		System.out.println(s.remove("lesk"));
-		System.out.println(s.remove("Dist0|0"));
+		System.out.println(s.remove("Dist0|1"));
 		fv_train.retainFeatures(s);
+		System.out.println(fv_train.featureIndex.size());
 		
-		System.out.println(fv_train.numFeatures());
-
 		StringBuilder results = new StringBuilder();
 
 		for (Entry<String, String> test : formAblations(fv_train.featureIndex).entrySet())
