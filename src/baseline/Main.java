@@ -243,9 +243,13 @@ class Main {
 		
 		Set<String> s = new HashSet<String>(fv_train.featureIndex.objectsList());
 		System.out.println(s);
-		System.out.println(s.remove("Dist0|1"));
+//		System.out.println(s.remove("Dist0|1"));
 		fv_train.retainFeatures(s);
+		fv_train.featureIndex.add("FAKE");
+		fv_train.featureIndex.add("FAKE2");
+
 		System.out.println(fv_train.featureIndex.size());
+		Thread.sleep(3000);
 		
 		StringBuilder results = new StringBuilder();
 

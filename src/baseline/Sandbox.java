@@ -1,25 +1,45 @@
 package baseline;
 
+import java.io.File;
 import java.io.PrintWriter;
 import java.util.Arrays;
 
+import edu.stanford.nlp.classify.LogisticClassifier;
+import edu.stanford.nlp.classify.LogisticClassifierFactory;
 import edu.stanford.nlp.classify.RVFDataset;
 import edu.stanford.nlp.ling.RVFDatum;
-import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.stats.ClassicCounter;
 import edu.stanford.nlp.stats.Counter;
-import utensils.Util;
 
 public class Sandbox {
 
-	public static void main(String[] args) {
-		Util.initialize();
+	public static void main(String[] args) throws Exception {
+//		Util.initialize();
+//
+//		String text = "Tom ran to the store to buy some milk";
+//		//String text1 = "Oliver doesn't believe in my code.";
+//
+//		Annotation a = Util.annotate(text);
+//		System.out.println(Util.rootLemPIPE(a));
+		RVFDataset<Integer,String> x = makeRandomData(150);
+		x.writeSVMLightFormat(new File("./out/RANDOM.txt"));
+		x.summaryStatistics();
+		LogisticClassifierFactory<Integer, String> factory = new LogisticClassifierFactory<>();
+		//System.setErr(DEVNULL);
+		LogisticClassifier<Integer, String> classifier = factory.trainClassifier(x);
 
-		String text = "Tom ran to the store to buy some milk";
-		String text1 = "Oliver doesn't believe in my code.";
+	}
 
-		Annotation a = Util.annotate(text);
-		System.out.println(Util.rootLemPIPE(a));
+	public static RVFDataset<Integer, String> makeRandomData(int nfeat) {
+		RVFDataset<Integer, String> data = new RVFDataset<>();
+		for (int l = 0; l < 2000; l++) {
+			Counter<String> thing = new ClassicCounter<String>();
+			for (int i = 0; i < nfeat; i++)
+				thing.incrementCount("Thing" + i, Math.random());
+
+			data.add(new RVFDatum<Integer, String>(thing, Math.random() > 0.5 ? 1 : -1));
+		}
+		return data;
 	}
 
 	public static void playWithData() {
