@@ -27,12 +27,23 @@ public class MaksSandbox {
 		Sentence s1 = new Sentence(text),
 				s2 = new Sentence(text1);
 
-		System.out.println(Util.rootLem(s1));
-		System.out.println(Util.rootLem(s2));
-//		
-//		System.out.println("Hello world");
+		System.out.println(s1.dependencyGraph().getFirstRoot().lemma());
+		System.out.println(s1.lemmas());
+		//System.out.println(s1.dependencyGraph().getFirstRoot().sentIndex());
 
-		Util.lemmatizedWS(new Sentence(text), new Sentence(text1));
+//		Collection<TypedDependency> dependencies = Util.dependency(s1);
+//
+//		for(TypedDependency td : dependencies)
+//		{
+//			if(td.reln().toString().equals("root"))
+//			{
+//				//System.out.println(td.dep().getOriginal());
+//				System.out.println(td.dep().lemma());
+//			}
+//
+//		}
+		System.out.println(s1.dependencyGraph().getFirstRoot().lemma());
+
 	}
 
 	protected static StanfordCoreNLP pipeline;
