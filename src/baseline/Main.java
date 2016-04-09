@@ -137,26 +137,27 @@ class Main {
 				FORMATTER.format((2 * prec * rec / (rec + prec)));
 	}
 
-	public static <A> String runAblativeXVal(String name, GeneralDataset<A, String> traind, String spec, int crossN,
+	public static <A> String runAblativeXVal(String name, GeneralDataset<A, String> traind, Set<String> toKeep,
+			int crossN,
 			A wrt) {
-		if (spec != null) {
+		if (toKeep != null) {
 			traind = traind.sampleDataset(0, 1.0, false);
-
-			Set<String> toKeep = new HashSet<>(Arrays.asList(spec.split(" && ")));
 			traind.retainFeatures(toKeep);
 		}
 
 		int Q = traind.numClasses();
 		int[][] sysgold = new int[Q][Q];
 		int total = 0;
+
+		//index of the label with respect to which we take the precision and recall scores.
 		int wrti = traind.labelIndex.indexOf(wrt);
 
 		RVFDataset<A, String> wrong = new RVFDataset<A, String>();
+		LogisticClassifierFactory<A, String> factory = new LogisticClassifierFactory<>();
 
 		for (int v = 0; v < crossN; v++) {
 			Pair<GeneralDataset<A, String>, GeneralDataset<A, String>> fold = traind.splitOutFold(v, crossN);
 
-			LogisticClassifierFactory<A, String> factory = new LogisticClassifierFactory<>();
 			System.setErr(DEVNULL);
 			LogisticClassifier<A, String> classifier = factory.trainClassifier(fold.first);
 			System.setErr(NORMERR);
@@ -168,7 +169,8 @@ class Main {
 				sysgold[traind.labelIndex.indexOf(sys)][traind.labelIndex.indexOf(gold)]++;
 				total++;
 
-				wrong.add(dat);
+				if (!sys.equals(gold))
+					wrong.add(dat);
 			}
 		}
 
@@ -216,16 +218,15 @@ class Main {
 	}
 
 	public static <A> String runAblativeTest(GeneralDataset<A, String> trainFull,
-			GeneralDataset<A, String> testFull, String spec, String name) {
+			GeneralDataset<A, String> testFull, Set<String> toKeep, String name) {
 
 		GeneralDataset<A, String> train = trainFull, test = testFull;
 
-		if (spec != null) {
-			LOG.q("\nStarting ablative test " + spec);
+		if (toKeep != null) {
+			LOG.q("\nStarting ablative test " + name);
 			train = trainFull.sampleDataset(0, 1.0, false);
 			test = trainFull.sampleDataset(0, 1.0, false);
 
-			Set<String> toKeep = new HashSet<>(Arrays.asList(spec.split(" && ")));
 			train.retainFeatures(toKeep);
 			test.retainFeatures(toKeep);
 		} else
@@ -238,19 +239,19 @@ class Main {
 		return name + " & " + stats(classifier, test);
 	}
 
-	public static HashMap<String, String> formAblations(Index<String> featureLabels) {
+	public static HashMap<String, Set<String>> formAblations(Index<String> featureLabels) {
 		// form descriptions of all ablations
-		HashMap<String, String> ablations = new LinkedHashMap<>();
+		HashMap<String, Set<String>> ablations = new LinkedHashMap<>();
 
 		ablations.put("FULL", null);
-		ablations.put("Dist + Sub + Neg + Ratio", "");
-		ablations.put("Sub + Neg + Ratio + Dep", "");
-		ablations.put("Dist + Neg", "");
-		ablations.put("Dist", "");
-		ablations.put("Sub", "");
+		ablations.put("Dist + Sub + Neg + Ratio", new HashSet<String>());
+		ablations.put("Sub + Neg + Ratio + Dep", new HashSet<String>());
+		ablations.put("Dist + Neg", new HashSet<String>());
+		ablations.put("Dist", new HashSet<String>());
+		ablations.put("Sub", new HashSet<String>());
 
 		for (String metric : StringSimCalculator.NAMES)
-			ablations.put("Metric:" + metric, "");
+			ablations.put("Metric:" + metric, new HashSet<String>());
 
 		for (String feature : featureLabels) {
 			for (String key : ablations.keySet()) {
@@ -258,7 +259,7 @@ class Main {
 				if ((bar > 0 && key.startsWith("Metric:")
 						&& key.contains(StringSimCalculator.NAMES[Integer.parseInt(feature.substring(bar + 1))]))
 						|| key.contains(feature.substring(0, 3)))
-					ablations.put(key, ablations.get(key) + " && " + feature);
+					ablations.get(key).add(feature);
 			}
 		}
 
@@ -333,9 +334,9 @@ class Main {
 		}
 
 		StringBuilder results = new StringBuilder();
-		Map<String, String> ablations = formAblations(fv_train.featureIndex);
+		Map<String, Set<String>> ablations = formAblations(fv_train.featureIndex);
 
-		for (Entry<String, String> test : ablations.entrySet()) {
+		for (Entry<String, Set<String>> test : ablations.entrySet()) {
 			results.append(runAblativeTest(fv_train, fv_test, test.getValue(), test.getKey()) + " \\\\\n");
 			System.out.println(runAblativeXVal("XVAL" + test.getKey(), fv_train, test.getValue(), 6, 1) + " \\\\");
 		}
