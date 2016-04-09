@@ -9,6 +9,9 @@ public class LOG {
 	public static void o(String str) {
 		log(0, str);
 	}
+	public static void q(String str) {
+		log(10, str);
+	}
 
 	public static void log(int vlevel, String str) {
 		if (vlevel <= VERB)
