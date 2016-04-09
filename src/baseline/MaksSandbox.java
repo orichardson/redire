@@ -4,9 +4,11 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
+import utensils.Util;
 import edu.stanford.nlp.ling.CoreAnnotations.LemmaAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.SentencesAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.TokensAnnotation;
@@ -14,8 +16,8 @@ import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.simple.Sentence;
+import edu.stanford.nlp.trees.TypedDependency;
 import edu.stanford.nlp.util.CoreMap;
-import utensils.Util;
 
 public class MaksSandbox {
 
@@ -26,13 +28,22 @@ public class MaksSandbox {
 
 		Sentence s1 = new Sentence(text),
 				s2 = new Sentence(text1);
+		System.out.println(s1.dependencyGraph().getFirstRoot().lemma());
+		System.out.println(s1.lemmas());
+		//System.out.println(s1.dependencyGraph().getFirstRoot().sentIndex());
 
-		System.out.println(Util.lemmae(s1));
-		System.out.println(Util.lemmae(s2));
-//		
-//		System.out.println("Hello world");
-
-		Util.lemmatizedWS(new Sentence(text), new Sentence(text1));
+//		Collection<TypedDependency> dependencies = Util.dependency(s1);
+//
+//		for(TypedDependency td : dependencies)
+//		{
+//			if(td.reln().toString().equals("root"))
+//			{
+//				//System.out.println(td.dep().getOriginal());
+//				System.out.println(td.dep().lemma());
+//			}
+//
+//		}
+		System.out.println(s1.dependencyGraph().getFirstRoot().lemma());
 	}
 
 	protected static StanfordCoreNLP pipeline;
