@@ -1,9 +1,8 @@
 package utensils;
 
-
-
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
@@ -23,16 +22,18 @@ import edu.cmu.lti.ws4j.util.WS4JConfiguration;
 import edu.stanford.nlp.ling.CoreAnnotations;
 import edu.stanford.nlp.ling.CoreAnnotations.LemmaAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.PartOfSpeechAnnotation;
+import edu.stanford.nlp.ling.CoreAnnotations.SentencesAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.TextAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.TokensAnnotation;
 import edu.stanford.nlp.ling.CoreLabel;
-import edu.stanford.nlp.ling.Word;
 import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.semgraph.SemanticGraph;
 import edu.stanford.nlp.semgraph.SemanticGraphCoreAnnotations;
+import edu.stanford.nlp.semgraph.SemanticGraphCoreAnnotations.CollapsedDependenciesAnnotation;
 import edu.stanford.nlp.simple.Sentence;
 import edu.stanford.nlp.trees.TypedDependency;
+import edu.stanford.nlp.util.CoreMap;
 import framework.NormalizedTypedDependency;
 
 /**
@@ -43,122 +44,119 @@ import framework.NormalizedTypedDependency;
 public class Util {
 
 	private static StanfordCoreNLP pipeline;
-
-	public static void initialize()
-	{
-		Properties props = new Properties();
-		props.setProperty("annotators", "tokenize, ssplit, pos, lemma, parse, depparse");
-		pipeline = new StanfordCoreNLP(props);
-	}
 	private static ILexicalDatabase db = new NictWordNet();
+	private static HashMap<String, RelatednessCalculator> WSMETRICES = new HashMap<>();
 
-	private static RelatednessCalculator[] WSMetric = {
-		new HirstStOnge(db), new LeacockChodorow(db), new Lesk(db),  new WuPalmer(db), 
-		new Resnik(db), new JiangConrath(db), new Lin(db), new Path(db)
-	};
-	
-	public static void wordnet()
-	{
+	public static void initialize() {
+		Properties props = new Properties();
+		props.setProperty("annotators", "tokenize, ssplit, pos, lemma, depparse");
+		pipeline = new StanfordCoreNLP(props);
+
+		WSMETRICES.put("hirst", new HirstStOnge(db));
+		WSMETRICES.put("leacock", new LeacockChodorow(db));
+		WSMETRICES.put("lesk", new Lesk(db));
+		WSMETRICES.put("wupalmer", new WuPalmer(db));
+		WSMETRICES.put("resnik", new Resnik(db));
+		WSMETRICES.put("jiang", new JiangConrath(db));
+		WSMETRICES.put("lin", new Lin(db));
+		WSMETRICES.put("path", new Path(db));
+
+	}
+
+	public static void wordnet() {
 		WS4JConfiguration.getInstance().setMFS(true);
 	}
-	
-	public static String lemmae(Sentence sent) {
+
+	public static String rootLem(Sentence sent) {
 		Collection<TypedDependency> dependencies = dependency(sent);
-//		System.out.println(dependencies);
-		
-		for(TypedDependency td : dependencies)
-		{
-//			System.out.println(td);
-			if(td.reln().toString().equals("root"))
-			{
-				
-//				System.out.println(td.reln().toString());
-//				System.out.println(td.dep().word());
-//				System.out.println(new Sentence(td.dep().word()).lemmas().get(0));
-//				
-//				System.out.println(td.dep().lemma());
+
+		for (TypedDependency td : dependencies) {
+			if (td.reln().toString().equals("root")) {
 				return new Sentence(td.dep().word()).lemmas().get(0);
 			}
-				
 		}
 
-		
 		return "";
 	}
-	
-	public static ArrayList<Double> lemmatizedWS(Sentence sentence1, Sentence sentence2)
-	{		
-		ArrayList<Double> similarities = new ArrayList<Double>();
-		
-		for(RelatednessCalculator rc : WSMetric)
-			similarities.add(rc.calcRelatednessOfWords(lemmae(sentence1), lemmae(sentence2)));
-		
-		return similarities;		
+
+	public static String rootLemPIPE(Annotation a) {
+		for (CoreMap core : a.get(SentencesAnnotation.class))
+			return core.get(CollapsedDependenciesAnnotation.class).getFirstRoot().lemma();
+
+		return "NOPE";
+
 	}
 
+	public static ArrayList<Double> lemmatizedWS(Sentence sentence1, Sentence sentence2, String... metric_names) {
+		ArrayList<Double> similarities = new ArrayList<Double>();
 
+		for (String name : metric_names)
+			similarities.add(WSMETRICES.get(name).calcRelatednessOfWords(rootLem(sentence1), rootLem(sentence2)));
 
-	public static Annotation annotate(String text)
-	{
+		return similarities;
+	}
+	public static ArrayList<Double> lemmatizedWSPIPE(Annotation sentence1, Annotation sentence2,
+			String... metric_names) {
+		ArrayList<Double> similarities = new ArrayList<Double>();
+
+		for (String name : metric_names)
+			similarities
+					.add(WSMETRICES.get(name).calcRelatednessOfWords(rootLemPIPE(sentence1), rootLemPIPE(sentence2)));
+
+		return similarities;
+	}
+
+	public static Annotation annotate(String text) {
 		Annotation document = new Annotation(text);
 		pipeline.annotate(document);
 
 		return document;
 	}
 
-	public static List<String> tokenize(Sentence s)
-	{
+	public static List<String> tokenize(Sentence s) {
 		return s.words();
 	}
 
-	public static List<String> tokenizeSlow(Annotation annotation)
-	{
+	public static List<String> tokenizePIPE(Annotation annotation) {
 		List<String> tokens = new ArrayList<String>();
-		for(CoreLabel token : annotation.get(TokensAnnotation.class))
-		{
+		for (CoreLabel token : annotation.get(TokensAnnotation.class)) {
 			tokens.add(token.get(TextAnnotation.class));
 		}
-		return tokens;		
-	} 
+		return tokens;
+	}
 
-	public static List<String> tagPos(Sentence s)
-	{
+	public static List<String> tagPos(Sentence s) {
 		return s.posTags();
 	}
 
-
-	public static List<String> tagPosSlow(Annotation annotation){
+	public static List<String> tagPosPIPE(Annotation annotation) {
 		List<String> pos = new ArrayList<String>();
-		for(CoreLabel core : annotation.get(TokensAnnotation.class))
-			pos.add(core.get(PartOfSpeechAnnotation.class));		
-		return pos;	
+		for (CoreLabel core : annotation.get(TokensAnnotation.class))
+			pos.add(core.get(PartOfSpeechAnnotation.class));
+		return pos;
 	}
 
-	public static List<String> lemma(Sentence s)
-	{
+	public static List<String> lemma(Sentence s) {
 		return s.lemmas();
 	}
 
-	public static List<String> lemmaSlow(Annotation annotation)
-	{
-		List<String> lemmas = new ArrayList<String>();		
-		for(CoreLabel core : annotation.get(TokensAnnotation.class))
+	public static List<String> lemmaPIPE(Annotation annotation) {
+		List<String> lemmas = new ArrayList<String>();
+		for (CoreLabel core : annotation.get(TokensAnnotation.class))
 			lemmas.add(core.get(LemmaAnnotation.class));
 
 		return lemmas;
 	}
 
-	public static Collection<TypedDependency> dependency(Sentence s)
-	{
+	public static Collection<TypedDependency> dependency(Sentence s) {
 		return s.dependencyGraph().typedDependencies();
 	}
 
-	public static Collection<TypedDependency> dependencySlow(Annotation annotation)
-	{
-		SemanticGraph sg = annotation.get(CoreAnnotations.SentencesAnnotation.class).get(0).get(SemanticGraphCoreAnnotations.BasicDependenciesAnnotation.class);
+	public static Collection<TypedDependency> dependencyPIPE(Annotation annotation) {
+		SemanticGraph sg = annotation.get(CoreAnnotations.SentencesAnnotation.class).get(0)
+				.get(SemanticGraphCoreAnnotations.BasicDependenciesAnnotation.class);
 		return sg.typedDependencies();
 	}
-
 
 	public static HashSet<NormalizedTypedDependency> getDependencySet(Sentence annotation) {
 		HashSet<NormalizedTypedDependency> tdset = new HashSet<NormalizedTypedDependency>();
@@ -171,6 +169,17 @@ public class Util {
 		return tdset;
 
 	}
+	public static HashSet<NormalizedTypedDependency> getDependencySetPIPE(Annotation a) {
+		HashSet<NormalizedTypedDependency> tdset = new HashSet<NormalizedTypedDependency>();
+		for (CoreMap core : a.get(SentencesAnnotation.class))
+			for (TypedDependency td : core.get(CollapsedDependenciesAnnotation.class).typedDependencies()) {
+				NormalizedTypedDependency ntd = new NormalizedTypedDependency(td.reln().toString(), td.gov().toString(),
+						td.dep().toString());
+				tdset.add(ntd);
+			}
 
+		return tdset;
+
+	}
 
 }
