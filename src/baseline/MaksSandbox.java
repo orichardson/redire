@@ -4,9 +4,22 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
+import utensils.Util;
+import edu.cmu.lti.lexical_db.ILexicalDatabase;
+import edu.cmu.lti.lexical_db.NictWordNet;
+import edu.cmu.lti.ws4j.RelatednessCalculator;
+import edu.cmu.lti.ws4j.impl.HirstStOnge;
+import edu.cmu.lti.ws4j.impl.JiangConrath;
+import edu.cmu.lti.ws4j.impl.LeacockChodorow;
+import edu.cmu.lti.ws4j.impl.Lesk;
+import edu.cmu.lti.ws4j.impl.Lin;
+import edu.cmu.lti.ws4j.impl.Path;
+import edu.cmu.lti.ws4j.impl.Resnik;
+import edu.cmu.lti.ws4j.impl.WuPalmer;
 import edu.stanford.nlp.ling.CoreAnnotations.LemmaAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.SentencesAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.TokensAnnotation;
@@ -15,34 +28,57 @@ import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.simple.Sentence;
 import edu.stanford.nlp.util.CoreMap;
-import utensils.Util;
 
 public class MaksSandbox {
 
+	private static HashMap<String, RelatednessCalculator> WSMETRICES = new HashMap<>();
+	private static ILexicalDatabase db = new NictWordNet();
 	public static void main(String[] args) {
-
+		
+		WSMETRICES.put("hirst", new HirstStOnge(db));
+		WSMETRICES.put("leacock", new LeacockChodorow(db));
+		WSMETRICES.put("lesk", new Lesk(db));
+		WSMETRICES.put("wupalmer", new WuPalmer(db));
+		WSMETRICES.put("resnik", new Resnik(db));
+		WSMETRICES.put("jiang", new JiangConrath(db));
+		WSMETRICES.put("lin", new Lin(db));
+		WSMETRICES.put("path", new Path(db));
+		
+		String[] names = {"hirst", "leacock", "lesk", "wupalmer", "resnik", "jiang", "lin", "path"};
+		
 		String text = "Tom ran to the store to buy some milk";
 		String text1 = "Oliver doesn't believe in my code.";
 
-		Sentence s1 = new Sentence(text),
-				s2 = new Sentence(text1);
-
-		System.out.println(s1.dependencyGraph().getFirstRoot().lemma());
-		System.out.println(s1.lemmas());
+//		Sentence s1 = new Sentence(text),
+//				s2 = new Sentence(text1);
+//
+//		//System.out.println(s1.dependencyGraph().getFirstRoot().lemma());
+//		//System.out.println(s1.lemmas());
+//		s1.lemmas();
+//		s2.lemmas();
 		//System.out.println(s1.dependencyGraph().getFirstRoot().sentIndex());
 
-//		Collection<TypedDependency> dependencies = Util.dependency(s1);
-//
-//		for(TypedDependency td : dependencies)
-//		{
-//			if(td.reln().toString().equals("root"))
-//			{
-//				//System.out.println(td.dep().getOriginal());
-//				System.out.println(td.dep().lemma());
-//			}
-//
-//		}
-		System.out.println(s1.dependencyGraph().getFirstRoot().lemma());
+		
+		for(Pair pair : read())
+		{
+			Sentence s1 = new Sentence(pair.first);
+			Sentence s2 = new Sentence(pair.second);
+			s1.lemmas();
+			s2.lemmas();
+			String le1 = s1.dependencyGraph().getFirstRoot().lemma();
+			String le2 = s2.dependencyGraph().getFirstRoot().lemma();
+			System.out.println(le1);
+			System.out.println(le2);
+			
+			ArrayList<Double> similarities = new ArrayList<Double>();
+			
+			for(String name : names)
+				similarities.add(WSMETRICES.get(name).calcRelatednessOfWords(le1, le2));
+			System.out.println(similarities);
+			System.out.println("-----------------------------------------------");
+		}
+		
+
 
 	}
 
