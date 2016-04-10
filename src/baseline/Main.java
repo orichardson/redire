@@ -1,14 +1,18 @@
 package baseline;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -40,6 +44,7 @@ class Main {
 	 */
 	public static int MODE = 1;
 
+	public static final DecimalFormat FORMATTER = new DecimalFormat("0.0000");
 	// to suppress classifier output.
 	public static final PrintStream NORMERR = System.out;
 	public static final PrintStream DEVNULL = new PrintStream(new OutputStream() {
@@ -116,66 +121,137 @@ class Main {
 		double acc = c.evaluateAccuracy(testd);
 		double prec = -1, rec = -1;
 
-		LOG.m("Accuracy: " + acc);
-		LOG.m("Precision & Recall & F-measure");
+		LOG.q("Accuracy: " + acc);
+		LOG.q("Precision & Recall & F-measure");
 		for (A val : testd.labelIndex()) {
 			Pair<Double, Double> pr = c.evaluatePrecisionAndRecall(testd, val);
 			if (prec < 0) {
 				prec = pr.first;
 				rec = pr.second;
 			}
-			LOG.m(pr.first + " & " + pr.second + " & " + ((2 * pr.first * pr.second) / (pr.first + pr.second)));
+			LOG.q(pr.first + " & " + pr.second + " & " + ((2 * pr.first * pr.second) / (pr.first + pr.second)));
 		}
-		return acc + " & " + prec + " & " + rec + " & " + (2 * prec * rec / (rec + prec));
+		return FORMATTER.format(acc) + " & " +
+				FORMATTER.format(prec) + " & " +
+				FORMATTER.format(rec) + " & " +
+				FORMATTER.format((2 * prec * rec / (rec + prec)));
+	}
+
+	public static <A> String runAblativeXVal(String name, GeneralDataset<A, String> traind, Set<String> toKeep,
+			int crossN,
+			A wrt) {
+		if (toKeep != null) {
+			traind = traind.sampleDataset(0, 1.0, false);
+			traind.retainFeatures(toKeep);
+		}
+
+		int Q = traind.numClasses();
+		int[][] sysgold = new int[Q][Q];
+		int total = 0;
+
+		//index of the label with respect to which we take the precision and recall scores.
+		int wrti = traind.labelIndex.indexOf(wrt);
+
+		RVFDataset<A, String> wrong = new RVFDataset<A, String>();
+		LogisticClassifierFactory<A, String> factory = new LogisticClassifierFactory<>();
+
+		for (int v = 0; v < crossN; v++) {
+			Pair<GeneralDataset<A, String>, GeneralDataset<A, String>> fold = traind.splitOutFold(v, crossN);
+
+			System.setErr(DEVNULL);
+			LogisticClassifier<A, String> classifier = factory.trainClassifier(fold.first);
+			System.setErr(NORMERR);
+
+			for (RVFDatum<A, String> dat : fold.second) {
+				A sys = classifier.classOf(dat.asFeaturesCounter());
+				A gold = dat.label();
+
+				sysgold[traind.labelIndex.indexOf(sys)][traind.labelIndex.indexOf(gold)]++;
+				total++;
+
+				if (!sys.equals(gold))
+					wrong.add(dat);
+			}
+		}
+
+		try {
+			wrong.writeSVMLightFormat(new File("./out/WRONG_lightsvm.txt"));
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+
+		// accuracy = total correct / total
+		int correct = 0;
+		for (int i = 0; i < Q; i++)
+			correct += sysgold[i][i];
+		double acc = correct / (double) total;
+
+		// precision = correctWRT / tried WRT
+		int attempted = 0;
+		for (int i = 0; i < Q; i++)
+			attempted += sysgold[wrti][i];
+		double prec = sysgold[wrti][wrti] / (double) attempted;
+
+		// recall = correct WRT / true WRT
+		int trueW = 0;
+		for (int i = 0; i < Q; i++)
+			trueW += sysgold[i][wrti];
+		double rec = sysgold[wrti][wrti] / (double) trueW;
+
+		double fscore = 2 * rec * prec / (rec + prec);
+
+		return name + " & " + FORMATTER.format(acc) + " & " +
+				FORMATTER.format(prec) + " & " +
+				FORMATTER.format(rec) + " & " +
+				FORMATTER.format(fscore);
+
 	}
 
 	public static <A> LogisticClassifier<A, String> makeClassifier(String name, GeneralDataset<A, String> train) {
 		LogisticClassifierFactory<A, String> factory = new LogisticClassifierFactory<>();
-		//System.setErr(DEVNULL);
+		System.setErr(DEVNULL);
 		LogisticClassifier<A, String> classifier = factory.trainClassifier(train);
-		//System.setErr(NORMERR);
+		System.setErr(NORMERR);
 		RECOG.put(name, classifier);
 
 		return classifier;
 	}
 
 	public static <A> String runAblativeTest(GeneralDataset<A, String> trainFull,
-			GeneralDataset<A, String> testFull, String spec, String name) {
+			GeneralDataset<A, String> testFull, Set<String> toKeep, String name) {
 
-		System.out.println();
 		GeneralDataset<A, String> train = trainFull, test = testFull;
 
-		if (spec != null) {
-			LOG.m("Starting ablative test " + spec);
+		if (toKeep != null) {
+			LOG.q("\nStarting ablative test " + name);
 			train = trainFull.sampleDataset(0, 1.0, false);
 			test = trainFull.sampleDataset(0, 1.0, false);
 
-			Set<String> toKeep = new HashSet<>(Arrays.asList(spec.split(", ")));
 			train.retainFeatures(toKeep);
 			test.retainFeatures(toKeep);
 		} else
-			LOG.m("Running full classifier...");
+			LOG.q("\nRunning full classifier...");
 
 		LogisticClassifier<A, String> classifier = makeClassifier(name, train);
-		LOG.m("... Trained");
-		LOG.m("Weights: " + Arrays.toString(classifier.getWeights()));
+		LOG.q("... Trained");
+		LOG.q("Weights: " + Arrays.toString(classifier.getWeights()));
 
 		return name + " & " + stats(classifier, test);
 	}
 
-	public static HashMap<String, String> formAblations(Index<String> featureLabels) {
+	public static HashMap<String, Set<String>> formAblations(Index<String> featureLabels) {
 		// form descriptions of all ablations
-		HashMap<String, String> ablations = new LinkedHashMap<>();
+		HashMap<String, Set<String>> ablations = new LinkedHashMap<>();
 
 		ablations.put("FULL", null);
-		ablations.put("Dist + Sub + Neg + Ratio", "");
-		ablations.put("Sub + Neg + Ratio + Dep", "");
-		ablations.put("Dist + Neg", "");
-		ablations.put("Dist", "");
-		ablations.put("Sub", "");
+		ablations.put("Dist + Sub + Neg + Ratio", new HashSet<String>());
+		ablations.put("Sub + Neg + Ratio + Dep", new HashSet<String>());
+		ablations.put("Dist + Neg", new HashSet<String>());
+		ablations.put("Dist", new HashSet<String>());
+		ablations.put("Sub", new HashSet<String>());
 
 		for (String metric : StringSimCalculator.NAMES)
-			ablations.put("Metric:" + metric, "");
+			ablations.put("Metric:" + metric, new HashSet<String>());
 
 		for (String feature : featureLabels) {
 			for (String key : ablations.keySet()) {
@@ -183,12 +259,32 @@ class Main {
 				if ((bar > 0 && key.startsWith("Metric:")
 						&& key.contains(StringSimCalculator.NAMES[Integer.parseInt(feature.substring(bar + 1))]))
 						|| key.contains(feature.substring(0, 3)))
-					ablations.put(key, ablations.get(key) + ", " + feature);
+					ablations.get(key).add(feature);
 			}
 		}
 
-		return ablations;
+		//pad all names to same length with spaces
+		int maxl = -1;
+		Set<String> keys = new LinkedHashSet<>(ablations.keySet());
+		for (String s : keys)
+			if (s.length() > maxl)
+				maxl = s.length();
 
+		for (String s : keys) {
+			ablations.put(pad(s, maxl), ablations.remove(s));
+		}
+
+		return ablations;
+	}
+
+	public static String pad(String s, int n) {
+		char[] chars = new char[n];
+		int len = s.length();
+
+		for (int i = 0; i < n; i++)
+			chars[i] = i < len ? s.charAt(i) : ' ';
+
+		return new String(chars);
 	}
 
 	public static boolean LOAD = true;
@@ -197,10 +293,6 @@ class Main {
 		RVFDataset<Integer, String> fv_train, fv_test;
 
 		if (LOAD) {
-//			fv_train = new RVFDataset<>(); fv_test = new RVFDataset<>();
-//			fv_train.readSVMLightFormat(new File("./out/train_lightsvm.txt"));
-//			fv_train.readSVMLightFormat(new File("./out/test_lightsvm.txt"));
-
 			RVFDataset<String, String> loaded = RVFDataset.readSVMLightFormat("./out/train_lightsvm.txt");
 			Index<Integer> hi = new HashIndex<>(Arrays.asList(1, -1));
 			Index<String> fi = HashIndex.loadFromFilename("./out/feature_index.txt");
@@ -215,7 +307,6 @@ class Main {
 			LOG.m("loaded both files.");
 
 		} else {
-			//Util.initialize();
 			Util.wordnet();
 
 			// The MSR training file and test file	
@@ -232,28 +323,23 @@ class Main {
 			fv_train = makeFeatureData(trainMSR, MODE);
 			fv_test = makeFeatureData(testMSR, MODE);
 //		System.setErr(NORMERR);
+
 			LOG.m("writing vectors to files...");
 
 			fv_train.writeSVMLightFormat(new File("./out/train_lightsvm.txt"));
 			fv_train.featureIndex().saveToFilename("./out/feature_index.txt");
 			fv_train.labelIndex().saveToFilename("./out/label_index.txt");
-			fv_train.writeSVMLightFormat(new File("./out/test_lightsvm.txt"));
+			fv_test.writeSVMLightFormat(new File("./out/test_lightsvm.txt"));
 			LOG.m("...done");
 		}
-		
-		Set<String> s = new HashSet<String>(fv_train.featureIndex.objectsList());
-		System.out.println(s);
-//		System.out.println(s.remove("Dist0|1"));
-//		fv_train.retainFeatures(s);
 
-		System.out.println(fv_train.featureIndex.size());
-		
 		StringBuilder results = new StringBuilder();
+		Map<String, Set<String>> ablations = formAblations(fv_train.featureIndex);
 
-		for (Entry<String, String> test : formAblations(fv_train.featureIndex).entrySet())
-			results.append(runAblativeTest(fv_train, fv_test, test.getValue(), test.getKey()) + "\\\\\n");
-
-
+		for (Entry<String, Set<String>> test : ablations.entrySet()) {
+			results.append(runAblativeTest(fv_train, fv_test, test.getValue(), test.getKey()) + " \\\\\n");
+			System.out.println(runAblativeXVal("XVAL" + test.getKey(), fv_train, test.getValue(), 6, 1) + " \\\\");
+		}
 		System.out.println("\n\n" + results);
 	}
 }

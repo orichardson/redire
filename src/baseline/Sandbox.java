@@ -4,8 +4,6 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.util.Arrays;
 
-import edu.stanford.nlp.classify.LogisticClassifier;
-import edu.stanford.nlp.classify.LogisticClassifierFactory;
 import edu.stanford.nlp.classify.RVFDataset;
 import edu.stanford.nlp.ling.RVFDatum;
 import edu.stanford.nlp.stats.ClassicCounter;
@@ -36,9 +34,6 @@ public class Sandbox {
 				loaded.getDataArray(), loaded.getValuesArray());
 
 		y.summaryStatistics();
-		LogisticClassifierFactory<Integer, String> factory = new LogisticClassifierFactory<>();
-		//System.setErr(DEVNULL);
-		LogisticClassifier<Integer, String> classifier = factory.trainClassifier(y);
 
 	}
 
