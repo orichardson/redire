@@ -50,6 +50,6 @@ def analyze(X_train, Y_train, X_test, Y_test):
 		rec = metrics.recall_score(yest, system, average=None)
 		f1 = metrics.f1_score(yest, system, average=None)
 		
-		print(name, acc, prec[0],prec[1], rec[0],rec[1], f1[0],f1[1], sep=' & ',end=' \\\\\n')
+		print((' & '.join(['{}'] + ['{:06.4f}']*7)).format(name, acc, prec[0],prec[1], rec[0],rec[1], f1[0],f1[1]),end=' \\\\\n')
 		
 	print()
