@@ -137,8 +137,8 @@ public class MaksSandbox {
 	}
 
 	public class Pair {
-		String first;
-		String second;
+		public String first;
+		public String second;
 
 		public Pair(String _f, String _s) {
 			first = _f;

@@ -43,15 +43,14 @@ public class Main {
 		{
 			try
 			{
-				if(loading == 47)
-					System.out.println();
 				training.add(new RVFDatum<>(computeVector(msr.first(), msr.second()), msr.isPara() ? 1 : -1));
 			}
 			catch(NumberFormatException e)
 			{
-				System.out.println("Error "+e.getMessage());
+				System.out.println(loading);
+				//System.out.println(msr.first());
 			}
-			if(verbatim)System.out.println(loading++);
+			loading++;
 		}
 		return training;
 	}
@@ -80,14 +79,15 @@ public class Main {
 			String training_file = "data/msr/msr_paraphrase_train.txt";
 			String testing_file = "data/msr/msr_paraphrase_test.txt";
 			
+			training = trainDataset(training_file, true);	
 			testing = trainDataset(testing_file, true);
-			training = trainDataset(training_file, true);		
+				
 					
 
-			training.writeSVMLightFormat(new File("./out/wan_wn_train_lightsvm.txt"));
-			training.featureIndex().saveToFilename("./out/wan_wn_feature_index.txt");
-			training.labelIndex().saveToFilename("./out/wan_wn_label_index.txt");
-			testing.writeSVMLightFormat(new File("./out/wan_wn_test_lightsvm.txt"));
+			training.writeSVMLightFormat(new File("./out/wan_full_train_lightsvm.txt"));
+			training.featureIndex().saveToFilename("./out/wan_full_feature_index.txt");
+			training.labelIndex().saveToFilename("./out/wan_full_label_index.txt");
+			testing.writeSVMLightFormat(new File("./out/wan_full_test_lightsvm.txt"));
 		}
 		
 		
@@ -211,7 +211,7 @@ public class Main {
 			double dep1size = dep1L.size();
 			double dep2size = dep2L.size();
 			dep1L.retainAll(dep2L);
-			double overlapSize = dep1.size();
+			double overlapSize = dep1L.size();
 			features.incrementCount("Feature"+(counter++),overlapSize/dep1size);
 			features.incrementCount("Feature"+(counter++),overlapSize/dep2size);
 		}
@@ -293,7 +293,6 @@ public class Main {
 	
 	public static double ngramOverlap(ArrayList<Ngram> L1, ArrayList<Ngram> L2, int n)
 	{
-		int overlap = 0;
 		
 		HashMap<Ngram, Integer> candidate = new HashMap<Ngram, Integer>();
 		HashMap<Ngram, Integer> reference = new HashMap<Ngram, Integer>();
@@ -321,7 +320,6 @@ public class Main {
 						reference.put(g1, reference.remove(g1)+1);
 					}
 				}
-				overlap += g1.equals(g2) ? 1 : 0;
 			}
 		}
 		double ret = 0;
