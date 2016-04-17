@@ -55,10 +55,6 @@ class Main {
 
 	/**
 	 * Creates a dataset for machine learning.
-	 * 
-	 * @param examples
-	 * @param mode
-	 * @return
 	 */
 	public static RVFDataset<Integer, String> makeFeatureData(Collection<? extends ParaExample> examples, int mode) {
 
@@ -290,8 +286,10 @@ class Main {
 	public static boolean LOAD = true;
 
 	public static void main(String[] args) throws Exception {
+		//The testing and training sets
 		RVFDataset<Integer, String> fv_train, fv_test;
 
+		//Load the features from a feature file (faster).
 		if (LOAD) {
 			RVFDataset<String, String> loaded = RVFDataset.readSVMLightFormat("./out/train_lightsvm.txt");
 			Index<Integer> hi = new HashIndex<>(Arrays.asList(1, -1));
@@ -305,7 +303,8 @@ class Main {
 					loaded2.getDataArray(), loaded2.getValuesArray());
 
 			LOG.m("loaded both files.");
-
+			
+			//Create features from the training files.
 		} else {
 			Util.wordnet();
 
@@ -319,6 +318,7 @@ class Main {
 			// actual classifier
 			LOG.m("Making Full Feature Vectors...");
 
+			//Make the features
 //		System.setErr(DEVNULL);
 			fv_train = makeFeatureData(trainMSR, MODE);
 			fv_test = makeFeatureData(testMSR, MODE);
@@ -331,12 +331,17 @@ class Main {
 			fv_train.labelIndex().saveToFilename("./out/label_index.txt");
 			fv_test.writeSVMLightFormat(new File("./out/test_lightsvm.txt"));
 			LOG.m("...done");
-		}
-
+		}//End of creating features
+		
+		//Prints the results at the end
 		StringBuilder results = new StringBuilder();
+		
+		//Forms all the ablations for experimenting
 		Map<String, Set<String>> ablations = formAblations(fv_train.featureIndex);
 
+		//Loop through every ablation
 		for (Entry<String, Set<String>> test : ablations.entrySet()) {
+			//Append the results from the Ablative test
 			results.append(runAblativeTest(fv_train, fv_test, test.getValue(), test.getKey()) + " \\\\\n");
 			System.out.println(runAblativeXVal("XVAL" + test.getKey(), fv_train, test.getValue(), 6, 1) + " \\\\");
 		}

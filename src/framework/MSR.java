@@ -69,6 +69,11 @@ public class MSR implements ParaExample{
 		return (sentence1 + sentence2).hashCode();
 	}
 	
+	public boolean containsID(int id)
+	{
+		return id1==id || id2 == id;
+	}
+	
 	/**
 	 * Reads all the MSR training/testing data and creates a list of MSR objects.
 	 */
