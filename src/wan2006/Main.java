@@ -235,13 +235,13 @@ public class Main {
 		features.incrementCount("Feature"+(counter++),(double) (tokens1.size() - tokens2.size()));
 		features.incrementCount("Feature"+(counter++),(double) Math.abs(tokens1.size() - tokens2.size()));
 		
-		String[] toCompute = new String[] { "lesk", "leacock", "lesk", "wupalmer", "resnik", "jiang", "lin", "path" };
-		ArrayList<Double> WNSim = Util.lemmatizedWSPIPE(a1, a2, toCompute);
-		
-		for(int i = 0; i < toCompute.length; i++)
-		{
-			features.incrementCount(toCompute[i], WNSim.get(i));
-		}
+//		String[] toCompute = new String[] { "lesk", "leacock", "lesk", "wupalmer", "resnik", "jiang", "lin", "path" };
+//		ArrayList<Double> WNSim = Util.lemmatizedWSPIPE(a1, a2, toCompute);
+//		
+//		for(int i = 0; i < toCompute.length; i++)
+//		{
+//			features.incrementCount(toCompute[i], WNSim.get(i));
+//		}
 		
 		return features;
 		
