@@ -1,0 +1,17 @@
+0=NegFirst
+1=Feature9
+2=Feature8
+3=Feature7
+4=Feature6
+5=NegLast
+6=Feature10
+7=Feature12
+8=Feature11
+9=Feature5
+10=Feature14
+11=Feature4
+12=Feature13
+13=Feature3
+14=Feature2
+15=Feature1
+16=Feature0
