@@ -1,6 +1,12 @@
 REDIRE
 ===========
-(Recognition Entails Discovery of Inference Rules, Ellen.
+(Recognition Entails Discovery of Inference Rules, Ellen.)
+
+
+Files of importance: everything in the *src/* folder is the java source, for generating feature vectors.
+The *out/* folder contains dumped feature vector files, in svm_light format. The *python/* folder contains the python code, 
+which was used primarily for the machine learning, since scikit-learn is a lot better than the stanford
+classifier, and we needed faster matrix algebra to do non-negative matrix decomposition.
 
 Required JAR Files:
 ------------
