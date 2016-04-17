@@ -45,6 +45,16 @@ public class MSR implements ParaExample{
 	public String second() {
 		return sentence2;
 	}
+	
+	public int firstID()
+	{
+		return id1;
+	}
+	
+	public int secondID()
+	{
+		return id2;
+	}
 
 	public String toString() {
 		String ret = "---------------------------------------------\n";
